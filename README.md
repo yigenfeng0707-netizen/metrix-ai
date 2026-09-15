@@ -3,6 +3,9 @@
 > Monad Metropolis 黑客松 · Track 01（链上金融与交易）
 > 现货执行走 Kuru 全链上订单簿，永续走 Perpl，移动端优先，全程链上可验证。
 
+[![CI](https://github.com/yigenfeng0707-netizen/metrix-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/yigenfeng0707-netizen/metrix-ai/actions/workflows/ci.yml)
+[![Homepage](https://img.shields.io/badge/homepage-metrix--ai-blue)](https://yigenfeng0707-netizen.github.io/metrix-ai/)
+
 ## 快速开始（Sim 模式，无需任何链上配置）
 
 ```bash

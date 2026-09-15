@@ -14,6 +14,7 @@ export interface Overview {
   mr: MRParams;
   perp: { enabled: boolean; side: string };
   stats: { totalDecisions: number };
+  db: { persisted: boolean; decisions: number; orders: number } | null;
 }
 
 export async function getOverview(): Promise<Overview> {

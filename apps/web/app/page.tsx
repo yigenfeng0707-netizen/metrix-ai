@@ -78,6 +78,17 @@ export default function HomePage() {
         </div>
       </div>
 
+      <div className="card row">
+        <span className="muted">PostgreSQL 落库</span>
+        <span className="small">
+          {data.db ? (
+            <>✅ 已持久化 <b className="mono">{data.db.decisions}</b> 条决策 / <b className="mono">{data.db.orders}</b> 笔订单</>
+          ) : (
+            "未启用（纯内存模式）"
+          )}
+        </span>
+      </div>
+
       <h2>快捷操作</h2>
       <div className="grid2">
         <Link href="/trade" className="btn full" style={{ textAlign: "center" }}>

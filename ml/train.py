@@ -30,13 +30,18 @@ def synthetic_prices(n: int = 4000) -> list[float]:
 
 
 def real_prices(market_id: int) -> list[float]:
-    """Perpl REST：GET /v1/market-data/:id/candles/:res/:from-:to（无需认证）"""
+    """Perpl REST：GET /v1/market-data/:id/candles/:res/:from-:to（无需认证）
+    注意：需带浏览器 User-Agent，否则被边缘节点 403。"""
     import time
     to = int(time.time() * 1000)
     frm = to - 30 * 86400 * 1000
     url = (f"https://app.perpl.xyz/api/v1/market-data/{market_id}"
            f"/candles/3600/{frm}-{to}")
-    data = json.loads(urllib.request.urlopen(url, timeout=15).read())
+    req = urllib.request.Request(url, headers={
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) MetrixAI/0.1",
+        "Accept": "application/json",
+    })
+    data = json.loads(urllib.request.urlopen(req, timeout=15).read())
     return [c["c"] for c in data.get("d", [])]
 
 
