@@ -1,0 +1,20 @@
+{
+  "name": "metrix-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Metrix AI — Monad 自主交易 Agent (Monad Metropolis Hackathon, Track 01)",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:agent": "npm run dev -w apps/agent",
+    "dev:web": "npm run dev -w apps/web",
+    "typecheck": "npm run typecheck -w apps/agent && npm run typecheck -w apps/web",
+    "test": "npm test -w apps/agent",
+    "build": "npm run build -w apps/agent && npm run build -w apps/web"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

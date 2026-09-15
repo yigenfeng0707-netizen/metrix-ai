@@ -1,0 +1,87 @@
+// Metrix AI 数据模型（完整方案 §4.7）
+// 骨架阶段使用内存仓库（apps/agent/src/store.ts）；W2 接入 PostgreSQL + Prisma：
+//   1. npm i -D prisma && npm i @prisma/client
+//   2. npx prisma migrate dev --name init
+//   3. store.ts 改为 Prisma 仓储实现
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Vault {
+  id           String   @id @default(cuid())
+  ownerAddress String   @unique
+  agentAddress String
+  balances     Json     @default("{}")
+  createdAt    DateTime @default(now())
+  decisions    Decision[]
+  orders       Order[]
+}
+
+model Decision {
+  id           String     @id @default(cuid())
+  vaultId      String
+  vault        Vault      @relation(fields: [vaultId], references: [id])
+  ts           DateTime
+  strategy     String
+  trigger      String
+  bookSnapshot Json
+  intent       Json
+  riskVerdict  Json
+  llmSummary   String?
+  status       String // executed | rejected | pending
+  txHash       String?
+  fillPrice    String?
+  order        Order?
+  riskEvents   RiskEvent[]
+
+  @@index([vaultId, ts])
+}
+
+model Order {
+  id            String    @id @default(cuid())
+  decisionId    String?   @unique
+  decision      Decision? @relation(fields: [decisionId], references: [id])
+  vaultId       String
+  venue         String // kuru | perpl
+  market        String
+  side          String // buy | sell
+  price         String?
+  size          String
+  clientOrderId String    @unique
+  txHash        String?
+  filledSize    String?
+  avgFillPrice  String?
+  status        String
+  createdAt     DateTime  @default(now())
+
+  @@index([vaultId, createdAt])
+}
+
+model RiskEvent {
+  id       String   @id @default(cuid())
+  vaultId  String
+  decisionId String?
+  decision Decision? @relation(fields: [decisionId], references: [id])
+  rule     String
+  detail   Json
+  action   String
+  ts       DateTime
+
+  @@index([vaultId, ts])
+}
+
+model UserCommand {
+  id        String   @id @default(cuid())
+  vaultId   String
+  rawText   String
+  parsed    Json
+  confirmed Boolean  @default(false)
+  applied   Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
