@@ -4,6 +4,7 @@ import { config, riskLimits } from "../config";
 import { fetchSimBook } from "../market/kuru-feed";
 import { SignalHub } from "../strategy/signal-hub";
 import { evaluatePerpTrend, resetPerpTrend } from "../strategy/perp-trend";
+import { evaluateMlSignal, predictUp } from "../strategy/ml-signal";
 import { checkRisk } from "../risk/risk-gate";
 import { execute } from "../execution/router";
 import { closeAllPositions } from "../execution/sim-adapter";
@@ -53,6 +54,15 @@ export function startAgentLoop(): void {
       const perp = evaluatePerpTrend(book, hub.prices);
       if (perp) signals.push(perp);
 
+      // ---- 2c. ML 信号策略（PyTorch GPU，可选；服务不可达自动降级） ----
+      if (config.ml.enabled && hub.prices.length >= config.ml.minHistory) {
+        const pUp = await predictUp(hub.prices);
+        if (pUp !== null) {
+          const ml = evaluateMlSignal(book, hub.prices, pUp, store.account.vaultUsdc);
+          if (ml) signals.push(ml);
+        }
+      }
+
       // ---- 3–5. Risk → Act → Audit（逐单处理） ----
       for (const { intent, trigger } of signals) {
         const risk = checkRisk(intent, store.account);
@@ -99,6 +109,7 @@ export function startAgentLoop(): void {
     `[agent] loop started: mode=${config.mode}, interval=${config.pollIntervalMs}ms, ` +
       `grid=[${store.params.grid.lower}, ${store.params.grid.upper}], ` +
       `mr=${store.params.mr.enabled ? `on(z>${store.params.mr.zEntry})` : "off"}, ` +
-      `perp=${config.perpl.enabled ? "on" : "off"}`,
+      `perp=${config.perpl.enabled ? "on" : "off"}, ` +
+      `ml=${config.ml.enabled ? `on(${config.ml.url})` : "off"}`,
   );
 }

@@ -1,0 +1,84 @@
+# Metrix AI 全栈编排（方案 §3.2）
+# 用法：docker compose up -d --build
+#   web   → http://localhost:3000
+#   agent → http://localhost:8787 (REST) / :8787/ws
+#   ml    → http://localhost:8900 (PyTorch GPU 信号服务，自动检测 CUDA)
+#
+# 注意：compose 默认 sim 模式（无链上配置也能跑通全栈）。
+# live 模式请在 apps/agent/.env 配置后，取消 agent 服务 env_file 的注释。
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: metrix
+      POSTGRES_PASSWORD: metrix_dev_only
+      POSTGRES_DB: metrix
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U metrix"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  ml:
+    build:
+      context: ./ml
+    ports:
+      - "8900:8900"
+    environment:
+      # 宿主机有 NVIDIA GPU + 已装 nvidia-container-toolkit 时启用 GPU
+      NVIDIA_VISIBLE_DEVICES: all
+    restart: unless-stopped
+
+  agent:
+    build:
+      context: .
+      dockerfile: apps/agent/Dockerfile
+    ports:
+      - "8787:8787"
+    environment:
+      AGENT_MODE: sim
+      PORT: "8787"
+      ML_ENABLED: "true"
+      ML_URL: http://ml:8900
+      DATABASE_URL: postgres://metrix:metrix_dev_only@postgres:5432/metrix
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ml:
+        condition: service_started
+    # live 模式：取消下行注释（.env 含 KURU_* / PERPL_* 等）
+    # env_file: apps/agent/.env
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_AGENT_URL: http://localhost:8787
+    depends_on:
+      - agent
+    restart: unless-stopped
+
+volumes:
+  pgdata:

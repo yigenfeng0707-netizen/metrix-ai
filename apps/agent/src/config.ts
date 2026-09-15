@@ -38,6 +38,16 @@ export const config = {
     sizeDecimals: Number(process.env.PERP_SIZE_DECIMALS ?? 5),
   },
 
+  // ML 信号服务（PyTorch GPU，方案 §3.2 ml 服务）
+  ml: {
+    /** 总开关：默认关闭；Docker compose 中开启 */
+    enabled: process.env.ML_ENABLED === "true",
+    url: process.env.ML_URL ?? "http://localhost:8900",
+    minHistory: Number(process.env.ML_MIN_HISTORY ?? 130),
+    /** 入场概率阈值：p_up ≥ threshold 买 / ≤ 1-threshold 卖 */
+    threshold: Number(process.env.ML_THRESHOLD ?? 0.6),
+  },
+
   // LLM
   llmApiBase: process.env.LLM_API_BASE ?? "",
   llmApiKey: process.env.LLM_API_KEY ?? "",

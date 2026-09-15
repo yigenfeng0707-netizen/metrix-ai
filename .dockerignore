@@ -1,0 +1,9 @@
+node_modules
+.next
+dist
+.git
+.github
+*.md
+docker-compose.yml
+ml/weights.pt
+apps/agent/.env

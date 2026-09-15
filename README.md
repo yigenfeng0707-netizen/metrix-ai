@@ -17,6 +17,38 @@ npm run dev:web          # http://localhost:3000
 
 打开 http://localhost:3000 即可看到：金库总览 → 实时决策流 → 持仓 → 自然语言指令 → 策略设置。
 
+## Docker 全栈一键部署（含 ML 信号服务）
+
+```bash
+docker compose up -d --build
+# web   → http://localhost:3000
+# agent → http://localhost:8787
+# ml    → http://localhost:8900  (PyTorch，自动检测 CUDA；宿主机需 NVIDIA GPU + nvidia-container-toolkit)
+```
+
+包含 5 个服务：`postgres`（W2 持久化）、`redis`（行情缓存）、`ml`（GPU 信号服务）、`agent`、`web`。
+默认 sim 模式，无任何链上配置即可跑通全栈。
+
+## ML 信号策略（PyTorch）
+
+LSTM 方向分类器（特征：对数收益率/振幅/动量，序列长度 120）：
+
+```bash
+# 本地训练（合成数据，离线可跑；GPU 版请用上方 Docker 镜像或安装 CUDA 版 torch）
+cd ml && python train.py --steps 1500          # 加 --real --market 1 用 Perpl 真实 K 线
+
+# 推理服务
+python -m uvicorn serve:app --port 8900
+#   GET  /health → { device, trained }
+#   POST /predict { prices: [...] } → { p_up, side }
+
+# Agent 启用（.env）：ML_ENABLED=true ML_URL=http://localhost:8900
+```
+
+Agent 主循环中作为第三个策略（`ml-signal`）：`p_up ≥ 0.6 → 买`，`≤ 0.4 → 卖`；
+服务不可达时**静默降级跳过**，绝不阻塞主循环。训练/推理自动使用 CUDA（若可用）。
+
+
 ## 目录结构
 
 ```

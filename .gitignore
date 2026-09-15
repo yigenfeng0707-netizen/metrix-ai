@@ -14,3 +14,6 @@ next-env.d.ts.bak
 .DS_Store
 *.log
 coverage/
+ml/weights.pt
+ml/__pycache__/
+
