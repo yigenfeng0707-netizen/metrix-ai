@@ -90,5 +90,7 @@ metrix-ai/
 ## 与参赛方案的对应
 
 - 完整方案见仓库外层 `完整方案-MetrixAI-AI交易Agent.md`
-- Prisma 数据模型（W2 接入）：`apps/agent/prisma/schema.prisma`
+- 持久化（W2 已完成）：决策/订单 **write-through 写入 PostgreSQL**（`src/db/pg.ts`，
+  node-postgres 纯 JS 实现，`DATABASE_URL` 未配置时自动降级纯内存模式）；
+  表结构文档见 `apps/agent/prisma/schema.prisma`（Prisma 迁移作为后续演进项）
 - 提交要求：公开仓库 commit 覆盖黑客松窗口（评审需验证 6 周内新开发）

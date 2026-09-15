@@ -7,6 +7,7 @@ import { parseIntent } from "../llm/intent-parser";
 import { closeAllPositions } from "../execution/sim-adapter";
 import { config } from "../config";
 import { perpSide } from "../strategy/perp-trend";
+import { dbStats } from "../db/pg";
 
 type WsConn = { send: (data: string) => void; on: (ev: string, cb: () => void) => void };
 
@@ -35,6 +36,7 @@ export async function buildServer() {
     mr: store.params.mr,
     perp: { enabled: config.perpl.enabled, side: perpSide() },
     stats: { totalDecisions: store.decisions.length },
+    db: await dbStats(),
   }));
 
   app.get("/vaults/demo/decisions", async (req) => {

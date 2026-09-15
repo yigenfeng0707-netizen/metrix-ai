@@ -1,5 +1,6 @@
 import { EventEmitter } from "node:events";
 import type { AccountState, DecisionEvent, StrategyParams, ParsedCommand } from "@metrix/shared";
+import { persistDecision } from "./db/pg";
 
 export interface StoredCommand {
   id: string;
@@ -45,6 +46,7 @@ class Store extends EventEmitter {
     this.decisions.unshift(d);
     if (this.decisions.length > 500) this.decisions.pop();
     this.emit("decision", d);
+    void persistDecision(d); // write-through，失败仅告警不阻塞主循环
   }
 
   updateAccount(fn: (a: AccountState) => void): void {
