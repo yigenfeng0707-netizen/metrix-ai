@@ -13,10 +13,19 @@ import { entropyToMnemonic, mnemonicToSeedSync } from "@scure/bip39";
 import { wordlist } from "@scure/bip39/wordlists/english.js";
 
 const CRED_KEY = "metrix.mera.credential";
+const ADDR_KEY = "metrix.mera.address";
 
 export interface StoredCredential {
   credentialId: string;
   transports?: readonly string[];
+}
+
+/** 派生地址持久化（刷新页面后直接展示，无需重复 PRF 弹窗） */
+export function saveMeraAddress(address: string): void {
+  localStorage.setItem(ADDR_KEY, address);
+}
+export function loadMeraAddress(): string | null {
+  return localStorage.getItem(ADDR_KEY);
 }
 
 function loadStored(): StoredCredential | undefined {

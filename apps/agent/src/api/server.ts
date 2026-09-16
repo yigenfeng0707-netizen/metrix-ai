@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import Fastify from "fastify";
+import cors from "@fastify/cors";
 import websocket from "@fastify/websocket";
 import type { GridParams, MRParams } from "@metrix/shared";
 import { store, type StoredCommand } from "../store";
@@ -13,6 +14,7 @@ type WsConn = { send: (data: string) => void; on: (ev: string, cb: () => void) =
 
 export async function buildServer() {
   const app = Fastify({ logger: false });
+  await app.register(cors, { origin: true }); // 允许前端跨域访问（开发环境全放开）
   await app.register(websocket);
 
   // ---------- WebSocket 实时推送 ----------
