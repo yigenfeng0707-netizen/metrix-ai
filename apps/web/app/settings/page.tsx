@@ -11,7 +11,14 @@ import {
   loadMeraAddress,
   saveMeraAddress,
   getAusdBalance,
+  getMonBalance,
+  sendMonTransfer,
+  sendAusdTransfer,
 } from "@/lib/mera";
+
+/** Agent 金库地址（资金目标，环境变量注入） */
+const AGENT_WALLET = process.env.NEXT_PUBLIC_AGENT_WALLET ?? "0x56deA58769d57851D2372A4987C7EBD3a5F5C1E6";
+const EXPLORER_TX = "https://monadexplorer.com/tx/";
 
 export default function SettingsPage() {
   const [grid, setGrid] = useState<GridParams | null>(null);
@@ -21,8 +28,15 @@ export default function SettingsPage() {
   const [meraAddress, setMeraAddress] = useState<string | null>(null);
   const [meraHasCred, setMeraHasCred] = useState(false);
   const [ausd, setAusd] = useState<string>("");
+  const [mon, setMon] = useState<string>("");
   const [meraBusy, setMeraBusy] = useState(false);
   const [meraMsg, setMeraMsg] = useState("");
+  // 资金流（D3）：派生私钥仅存内存（刷新即失效，安全），转账金额与结果
+  const [fundAmount, setFundAmount] = useState("1");
+  const [fundTarget, setFundTarget] = useState<"mon" | "ausd">("mon");
+  const [fundBusy, setFundBusy] = useState(false);
+  const [fundMsg, setFundMsg] = useState("");
+  const [privKey, setPrivKey] = useState<`0x${string}` | null>(null);
 
   useEffect(() => {
     getOverview().then((d) => {
@@ -34,17 +48,23 @@ export default function SettingsPage() {
     setMeraHasCred(hasMeraCredential());
   }, []);
 
-  /** 派生成功后统一处理：持久化地址 + 查 AUSD 余额（主网） */
-  async function afterDerived(addr: string) {
+  /** 派生成功后统一处理：持久化地址 + 查主网余额（MON/AUSD） */
+  async function afterDerived(addr: string, pk: `0x${string}`) {
     setMeraAddress(addr);
     saveMeraAddress(addr);
     setMeraHasCred(true);
-    setMeraMsg("✅ passkey 账户已派生，正在查询 AUSD 余额…");
+    setPrivKey(pk);
+    setMeraMsg("✅ passkey 账户已派生，正在查询主网余额…");
     try {
-      const bal = await getAusdBalance(addr);
-      setAusd(bal > 0 ? `${bal} AUSD` : "0 AUSD（主网，需充值）");
+      const [m, a] = await Promise.all([
+        getMonBalance(addr).catch(() => null),
+        getAusdBalance(addr).catch(() => null),
+      ]);
+      setMon(m === null ? "N/A（主网 RPC 不可达）" : `${m.toFixed(4)} MON`);
+      setAusd(a === null ? "N/A" : a > 0 ? `${a} AUSD` : "0 AUSD");
     } catch {
-      setAusd("N/A（AUSD 为 Monad 主网资产，测试网不显示）");
+      setMon("N/A");
+      setAusd("N/A");
     }
   }
 
@@ -135,10 +155,10 @@ export default function SettingsPage() {
               setMeraMsg("");
               try {
                 // 已有 credential 时走登录（重新派生同一账户），否则创建新 passkey
-                const addr = hasMeraCredential()
-                  ? (await meraLogin()).address
-                  : (await meraCreateAccount("metrix-" + Math.random().toString(36).slice(2, 8))).address;
-                await afterDerived(addr);
+                const r = hasMeraCredential()
+                  ? await meraLogin()
+                  : await meraCreateAccount("metrix-" + Math.random().toString(36).slice(2, 8));
+                await afterDerived(r.address, r.privateKey);
               } catch (e) {
                 setMeraMsg("⚠ " + (e instanceof Error ? meraErrorHint(e) : String(e)));
               } finally {
@@ -153,12 +173,79 @@ export default function SettingsPage() {
         {meraAddress && (
           <p className="mono" style={{ margin: "8px 0 0", wordBreak: "break-all" }}>{meraAddress}</p>
         )}
-        {meraAddress && ausd && (
-          <p className="small" style={{ margin: "8px 0 0" }}>AUSD 余额：<b>{ausd}</b></p>
+        {meraAddress && (mon || ausd) && (
+          <div className="row" style={{ marginTop: 8 }}>
+            <span className="small muted">主网余额</span>
+            <span className="small"><b>{mon || "…"}</b> · <b>{ausd || "…"}</b></span>
+          </div>
         )}
       </div>
+
+      {meraAddress && privKey && (
+        <>
+          <h2>资金流（Mera 账户 → Agent 金库）</h2>
+          <div className="card">
+            <div className="row">
+              <div>
+                <div className="stat-label">转入目标（Agent 金库）</div>
+                <div className="mono small" style={{ wordBreak: "break-all" }}>{AGENT_WALLET}</div>
+              </div>
+            </div>
+            <div className="card" style={{ marginTop: 10 }}>
+              <div className="stat-label">转账金额</div>
+              <div className="row" style={{ margin: "6px 0 8px" }}>
+                {(["mon", "ausd"] as const).map((t) => (
+                  <button
+                    key={t}
+                    className={`btn ${fundTarget === t ? "" : "ghost"}`}
+                    onClick={() => setFundTarget(t)}
+                    style={{ flex: 1 }}
+                  >
+                    {t === "mon" ? "MON（原生）" : "AUSD（稳定币）"}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={fundAmount}
+                onChange={(e) => setFundAmount(e.target.value)}
+              />
+            </div>
+            <div className="row" style={{ marginTop: 10 }}>
+              <button
+                className="btn full"
+                disabled={fundBusy || Number(fundAmount) <= 0}
+                onClick={async () => {
+                  setFundBusy(true);
+                  setFundMsg("");
+                  try {
+                    const hash =
+                      fundTarget === "ausd"
+                        ? await sendAusdTransfer(privKey, AGENT_WALLET, Number(fundAmount))
+                        : await sendMonTransfer(privKey, AGENT_WALLET, Number(fundAmount));
+                    setFundMsg(`✅ 已广播：${hash.slice(0, 14)}…${hash.slice(-8)}`);
+                    window.open(EXPLORER_TX + hash, "_blank");
+                  } catch (e) {
+                    setFundMsg("⚠ " + (e instanceof Error ? e.message : String(e)));
+                  } finally {
+                    setFundBusy(false);
+                  }
+                }}
+              >
+                {fundBusy ? "签名中…" : "转入 Agent 金库"}
+              </button>
+            </div>
+            {fundMsg && <p className="small muted" style={{ margin: "8px 0 0" }}>{fundMsg}</p>}
+            <p className="muted small" style={{ margin: "8px 0 0" }}>
+              由 passkey 派生密钥本地签名（私钥不出内存）；Monad 按声明 gasLimit 收费，转账使用显式 gas。
+            </p>
+          </div>
+        </>
+      )}
       <p className="muted small">
-        该账户由你的 passkey 派生（无需助记词），后续用于 AUSD 余额展示与 Perpl 交易签名（D3）。
+        该账户由你的 passkey 派生（无需助记词），用于 AUSD/MON 余额展示与向 Agent 金库充值（D3 资金流）。
       </p>
 
       <h2>Perpl 永续模块（P1）</h2>
