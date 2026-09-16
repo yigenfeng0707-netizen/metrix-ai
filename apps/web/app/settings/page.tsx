@@ -187,13 +187,17 @@ export default function SettingsPage() {
           <div className="card">
             <div className="row">
               <div>
-                <div className="stat-label">转入目标（Agent 金库）</div>
-                <div className="mono small" style={{ wordBreak: "break-all" }}>{AGENT_WALLET}</div>
+                <div className="stat-label">第一步：先给你的 passkey 账户充值（从钱包/交易所转 MON 到）</div>
+                <div className="mono small" style={{ wordBreak: "break-all" }}>{meraAddress}</div>
               </div>
+              <button className="btn ghost" onClick={() => navigator.clipboard.writeText(meraAddress)}>
+                复制
+              </button>
             </div>
             <div className="card" style={{ marginTop: 10 }}>
-              <div className="stat-label">转账金额</div>
-              <div className="row" style={{ margin: "6px 0 8px" }}>
+              <div className="stat-label">第二步：向 Agent 金库转账</div>
+              <div className="mono small" style={{ wordBreak: "break-all", margin: "4px 0 8px" }}>{AGENT_WALLET}</div>
+              <div className="row" style={{ margin: "0 0 8px" }}>
                 {(["mon", "ausd"] as const).map((t) => (
                   <button
                     key={t}
@@ -221,11 +225,26 @@ export default function SettingsPage() {
                   setFundBusy(true);
                   setFundMsg("");
                   try {
+                    // 预检余额（QuickNode 会对余额不足直接拒绝且报错难懂）
+                    const amt = Number(fundAmount);
+                    if (fundTarget === "mon") {
+                      const bal = await getMonBalance(meraAddress).catch(() => -1);
+                      if (bal < amt + 0.01) {
+                        setFundMsg(`⚠ 余额不足：当前 ${bal < 0 ? "?" : bal} MON，转账需要 ${amt} MON + gas。请先给你的 passkey 账户充值。`);
+                        return;
+                      }
+                    } else {
+                      const bal = await getAusdBalance(meraAddress).catch(() => -1);
+                      if (bal < amt) {
+                        setFundMsg(`⚠ 余额不足：当前 ${bal < 0 ? "?" : bal} AUSD，需要 ${amt} AUSD。`);
+                        return;
+                      }
+                    }
                     const hash =
                       fundTarget === "ausd"
-                        ? await sendAusdTransfer(privKey, AGENT_WALLET, Number(fundAmount))
-                        : await sendMonTransfer(privKey, AGENT_WALLET, Number(fundAmount));
-                    setFundMsg(`✅ 已广播：${hash.slice(0, 14)}…${hash.slice(-8)}`);
+                        ? await sendAusdTransfer(privKey, AGENT_WALLET, amt)
+                        : await sendMonTransfer(privKey, AGENT_WALLET, amt);
+                    setFundMsg(`✅ 已广播：${hash.slice(0, 14)}…${hash.slice(-8)}（等待 finalized 确认）`);
                     window.open(EXPLORER_TX + hash, "_blank");
                   } catch (e) {
                     setFundMsg("⚠ " + (e instanceof Error ? e.message : String(e)));
