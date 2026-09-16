@@ -29,7 +29,20 @@ function signer(): ethers.Wallet {
     process.exit(1);
   }
   const provider = new ethers.providers.JsonRpcProvider(RPC);
-  return new ethers.Wallet(PK, provider);
+  const wallet = new ethers.Wallet(PK, provider);
+  // kuru-sdk 内嵌独立 ethers 副本，instanceof Signer 跨实例必失败 →
+  // 挂上 getSigner() 让 SDK 的 duck-typing 分支拿到钱包本体
+  (wallet as unknown as { getSigner: () => ethers.Wallet }).getSigner = () => wallet;
+  return wallet;
+}
+
+/** ParamFetcher/getL2Book 等只读调用必须用 provider（Signer 传 from override 会报错） */
+function provider(): ethers.providers.JsonRpcProvider {
+  if (!RPC) {
+    console.error("缺少 KURU_RPC_URL（见 .env.example）");
+    process.exit(1);
+  }
+  return new ethers.providers.JsonRpcProvider(RPC);
 }
 
 async function check(): Promise<void> {
@@ -43,19 +56,20 @@ async function check(): Promise<void> {
     console.warn("⚠ 未配置 KURU_MARKET_ADDRESS，跳过市场参数检查");
     return;
   }
-  const mp = await KuruSdk.ParamFetcher.getMarketParams(s, MARKET);
+  const mp = await KuruSdk.ParamFetcher.getMarketParams(provider(), MARKET);
   console.log("✓ 市场参数:", JSON.stringify(mp, (k, v) => (typeof v === "bigint" ? v.toString() : v), 2));
 }
 
 async function book(): Promise<void> {
+  const p = provider();
   const s = signer();
   if (!MARKET) {
     console.error("缺少 KURU_MARKET_ADDRESS");
     process.exit(1);
   }
-  const mp = await KuruSdk.ParamFetcher.getMarketParams(s, MARKET);
+  const mp = await KuruSdk.ParamFetcher.getMarketParams(p, MARKET);
   const abi = (await import("@kuru-labs/kuru-sdk/abi/OrderBook.json")).default;
-  const ob = new ethers.Contract(MARKET, abi.abi, s);
+  const ob = new ethers.Contract(MARKET, abi.abi, p);
   const l2 = await ob.getL2Book();
   // ⚠ W1 验证点：核对 bids/asks 字段结构与精度（baseAssetDecimals/quoteAssetDecimals）
   console.log("L2Book 原始结构（前 3 档）:");
@@ -82,31 +96,48 @@ async function deposit(token: string, amount: string, decimals: string): Promise
 }
 
 async function order(price: string, size: string): Promise<void> {
+  const p = provider();
   const s = signer();
   if (!CONFIRMED) {
-    console.error(`⚠ 将真实挂单 GTC postOnly: buy ${size} @ ${price}，随后撤单。确认请追加 --yes`);
+    console.error(`⚠ 将真实挂单 GTC postOnly: sell ${size} MON @ ${price} USDC，随后撤单。确认请追加 --yes`);
     process.exit(1);
   }
-  const mp = await KuruSdk.ParamFetcher.getMarketParams(s, MARKET);
-  const o = { price, size, isBuy: true, postOnly: true };
-  const gas = await KuruSdk.GTC.estimateGas(s, MARKET, mp, o);
-  const receipt = await KuruSdk.GTC.placeLimit(s, MARKET, mp, {
-    ...o,
-    txOptions: { gasLimit: gas.mul(120).div(100) },
-  });
+  const mp = await KuruSdk.ParamFetcher.getMarketParams(p, MARKET);
+  // 精度换算：pricePrecision/sizePrecision 为 10^n 形式
+  const priceDec = Math.log10(Number(mp.pricePrecision.toString()));
+  const sizeDec = Math.log10(Number(mp.sizePrecision.toString()));
+  const priceBn = ethers.utils.parseUnits(price, priceDec);
+  const sizeBn = ethers.utils.parseUnits(size, sizeDec);
+  // W1 验证结论：placeLimit 内部对 Signer+from 有兼容 bug，
+  // 直接使用底层 constructSellOrderTransaction + sendTransaction
+  const tx = await KuruSdk.GTC.constructSellOrderTransaction(s, MARKET, priceBn, sizeBn, true, p);
+  const sent = await s.sendTransaction(tx);
+  const receipt = await sent.wait(1);
   console.log("✓ 挂单成功 tx:", receipt.transactionHash);
-  // 解析 OrderCreated 事件获取 orderId（topic 见 docs.kuru.io）
   for (const log of receipt.logs) {
     if (log.topics[0] === ethers.utils.id("OrderCreated(uint40,address,uint96,uint32,bool)")) {
       const id = ethers.BigNumber.from(log.topics[1]);
       console.log("✓ orderId:", id.toString(), "→ 尝试撤单…");
-      const gasC = await KuruSdk.OrderCanceler.estimateGas(s, MARKET, [id]);
-      const rc = await KuruSdk.OrderCanceler.cancelOrders(s, MARKET, [id], {
-        gasLimit: gasC.mul(120).div(100),
-      });
+      const rc = await KuruSdk.OrderCanceler.cancelOrders(s, MARKET, [id]);
       console.log("✓ 撤单成功 tx:", rc.transactionHash);
     }
   }
+}
+
+/** IOC 市价卖出（isMargin=true，用保证金里的 MON）；W1 端到端验证用 */
+async function iocSell(size: string, minOut = "0"): Promise<void> {
+  const p = provider();
+  const s = signer();
+  if (!CONFIRMED) {
+    console.error(`⚠ 将 IOC 市价卖出 ${size} MON（isMargin=true）。确认请追加 --yes`);
+    process.exit(1);
+  }
+  const mp = await KuruSdk.ParamFetcher.getMarketParams(p, MARKET);
+  const receipt = await KuruSdk.IOC.placeMarket(
+    s, MARKET, mp,
+    { approveTokens: false, size, isBuy: false, minAmountOut: minOut, isMargin: true, fillOrKill: false },
+  );
+  console.log("✓ IOC 卖出成功 tx:", receipt.transactionHash);
 }
 
 async function main(): Promise<void> {
@@ -115,6 +146,7 @@ async function main(): Promise<void> {
     case "book": return book();
     case "deposit": return deposit(args[0], args[1], args[2]);
     case "order": return order(args[0], args[1]);
+    case "ioc-sell": return iocSell(args[0], args[1]);
     default:
       console.log(__doc__);
   }
