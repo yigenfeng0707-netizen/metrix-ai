@@ -16,12 +16,21 @@ import { config } from "../config";
  *  ③ IOC 参数与返回 receipt 结构
  */
 
+let providerCache: ethers.providers.JsonRpcProvider | null = null;
+
+function getProvider(): ethers.providers.JsonRpcProvider {
+  if (!config.rpcUrl) {
+    throw new Error("Kuru live 模式需要配置 KURU_RPC_URL（见 .env.example）");
+  }
+  if (!providerCache) providerCache = new ethers.providers.JsonRpcProvider(config.rpcUrl);
+  return providerCache;
+}
+
 function getSigner(): ethers.Wallet {
   if (!config.rpcUrl || !config.privateKey) {
     throw new Error("Kuru live 模式需要配置 KURU_RPC_URL / KURU_PRIVATE_KEY（见 .env.example）");
   }
-  const provider = new ethers.providers.JsonRpcProvider(config.rpcUrl);
-  const wallet = new ethers.Wallet(config.privateKey, provider);
+  const wallet = new ethers.Wallet(config.privateKey, getProvider());
   // kuru-sdk 内嵌独立 ethers 副本 → instanceof Signer 跨实例失败，挂 getSigner 兜底
   (wallet as unknown as { getSigner: () => ethers.Wallet }).getSigner = () => wallet;
   return wallet;
@@ -70,19 +79,28 @@ export async function placeLimit(intent: IntentOrder): Promise<string> {
   return receipt.transactionHash;
 }
 
-/** 市价单（IOC + fillOrKill）—— R5 滑点保护通过链上 minAmountOut 强制 */
+/** 市价单（IOC + fillOrKill）—— R5 滑点保护通过链上 minAmountOut 强制
+ *  ⚠ W1 实测：不能用 IOC.placeMarket（其 estimateGas 对 Signer 连接的 Contract
+ *  传 from 覆盖会报 "Contract with a Signer cannot override from"），
+ *  改用底层 constructMarketSellTransaction + sendTransaction。
+ */
 export async function placeMarket(intent: IntentOrder, minAmountOut: string): Promise<string> {
   const signer = getSigner();
-  const marketParams = await KuruSdk.ParamFetcher.getMarketParams(signer, config.marketAddress);
-  // W1 验证点 ③
-  const receipt = await KuruSdk.IOC.placeMarket(signer, config.marketAddress, marketParams, {
-    approveTokens: true,
-    size: intent.size,
-    isBuy: intent.side === "buy",
-    minAmountOut,
-    isMargin: true,
-    fillOrKill: true,
-  });
+  const marketParams = await KuruSdk.ParamFetcher.getMarketParams(getProvider(), config.marketAddress);
+  const isMargin = true; // 保证金模式：使用保证金账户资金（W1 已验证）
+  const fillOrKill = true;
+  const tx =
+    intent.side === "buy"
+      ? await KuruSdk.IOC.constructMarketBuyTransaction(
+          signer, config.marketAddress, marketParams,
+          intent.size, minAmountOut, isMargin, fillOrKill,
+        )
+      : await KuruSdk.IOC.constructMarketSellTransaction(
+          signer, config.marketAddress, marketParams,
+          intent.size, minAmountOut, isMargin, fillOrKill,
+        );
+  const sent = await signer.sendTransaction(tx);
+  const receipt = await sent.wait(1);
   return receipt.transactionHash;
 }
 

@@ -25,12 +25,12 @@ export function evaluateGrid(
 ): { intent: IntentOrder; trigger: string } | null {
   if (!p.enabled) return null;
   if (p.upper <= p.lower || p.grids < 2) return null;
-  // 价格跑出网格区间：观望（agent-loop 会对网格自动重锚）
-  if (book.bestAsk < p.lower || book.bestBid > p.upper) return null;
 
   const step = (p.upper - p.lower) / p.grids;
   const mid = (book.bestBid + book.bestAsk) / 2;
-  const level = Math.floor((mid - p.lower) / step);
+  // clamp 到边界格位：价格越界视为穿越边界格（自然把价格拉回区间，避免死锁）
+  const rawLevel = Math.floor((mid - p.lower) / step);
+  const level = Math.max(0, Math.min(p.grids - 1, rawLevel));
   if (level === lastLevel) return null;
 
   const prev = lastLevel;

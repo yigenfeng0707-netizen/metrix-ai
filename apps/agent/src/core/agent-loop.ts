@@ -6,6 +6,7 @@ import { resetGrid } from "../strategy/grid";
 import { SignalHub } from "../strategy/signal-hub";
 import { evaluatePerpTrend, resetPerpTrend } from "../strategy/perp-trend";
 import { evaluateMlSignal, predictUp } from "../strategy/ml-signal";
+import { evaluateMmLoop, resetMmLoop } from "../strategy/mm-loop";
 import { checkRisk } from "../risk/risk-gate";
 import { execute } from "../execution/router";
 import { closeAllPositions } from "../execution/sim-adapter";
@@ -51,7 +52,7 @@ export function startAgentLoop(): void {
       hub.push(book);
 
       // ---- 1b. 网格自动重锚：价格漂出区间（AMM 价格随交易漂移）时，
-      // 以当前价为中心平移网格，保证自持振荡（spread 损耗在测试网可忽略） ----
+      // 以当前价为中心平移网格 ----
       const mid = (book.bestBid + book.bestAsk) / 2;
       const span = store.params.grid.upper - store.params.grid.lower;
       if (mid < store.params.grid.lower || mid > store.params.grid.upper) {
@@ -60,9 +61,16 @@ export function startAgentLoop(): void {
         resetGrid();
       }
 
-      // ---- 2. Decide：现货组合策略（确定性，LLM 不进决策路径） ----
+      // ---- 2. Decide ----
       const venue = config.mode === "sim" ? "sim" : "kuru";
-      const signals = hub.evaluateSpot(book, store.params, venue);
+      const signals: Array<{ intent: import("@metrix/shared").IntentOrder; trigger: string }> = [];
+      if (config.mode === "testnet") {
+        // testnet：MM 交替循环（AMM 价格只有被交易才动，tick 交替保证持续成交）
+        const mm = evaluateMmLoop(book, "kuru");
+        if (mm) signals.push(mm);
+      } else {
+        signals.push(...hub.evaluateSpot(book, store.params, venue));
+      }
 
       // ---- 2b. Perp 趋势模块（P1，可选） ----
       const perp = evaluatePerpTrend(book, hub.prices);

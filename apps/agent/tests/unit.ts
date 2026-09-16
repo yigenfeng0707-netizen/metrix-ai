@@ -148,11 +148,16 @@ t("价格下穿一格 → 买单；上穿一格 → 卖单", () => {
   assert.equal(r3.intent.side, "sell");
 });
 
-t("价格跑出网格区间 → 观望", () => {
+t("价格越界 → clamp 到边界格位并触发回归信号", () => {
   resetGrid();
   const p = { enabled: true, lower: 2950, upper: 3150, grids: 8, orderSize: 0.02 };
-  assert.equal(evaluateGrid({ market: "T", ts: 0, bestBid: 2900, bestAsk: 2901 }, p, "sim"), null);
-  assert.equal(evaluateGrid({ market: "T", ts: 0, bestBid: 3200, bestAsk: 3201 }, p, "sim"), null);
+  // 先在区间中部建立基线
+  const base = { market: "T", ts: 0, bestBid: 3049.5, bestAsk: 3050.5 };
+  assert.equal(evaluateGrid(base, p, "sim"), null); // 基线
+  // 价格跌破下限 → clamp 到 level 0，相对基线（level ~4）大幅下穿 → 买入
+  const r1 = evaluateGrid({ market: "T", ts: 0, bestBid: 2900, bestAsk: 2901 }, p, "sim");
+  assert.ok(r1, "越界应触发买入回归信号");
+  assert.equal(r1.intent.side, "buy");
 });
 
 t("策略停用 → 不产出", () => {
