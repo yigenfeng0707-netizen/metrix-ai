@@ -3,12 +3,16 @@
 import { useEffect, useState } from "react";
 import type { GridParams, MRParams } from "@metrix/shared";
 import { getOverview, updateMr, updateStrategy } from "@/lib/api";
+import { meraCreateAccount, meraLogin, meraErrorHint } from "@/lib/mera";
 
 export default function SettingsPage() {
   const [grid, setGrid] = useState<GridParams | null>(null);
   const [mr, setMr] = useState<MRParams | null>(null);
   const [perp, setPerp] = useState<{ enabled: boolean; side: string } | null>(null);
   const [saved, setSaved] = useState(false);
+  const [meraAddress, setMeraAddress] = useState<string | null>(null);
+  const [meraBusy, setMeraBusy] = useState(false);
+  const [meraMsg, setMeraMsg] = useState("");
 
   useEffect(() => {
     getOverview().then((d) => {
@@ -83,6 +87,48 @@ export default function SettingsPage() {
       <button className="btn full" onClick={save}>
         {saved ? "✅ 已保存" : "保存策略参数"}
       </button>
+
+      <h2>Mera Passkey（Agora $10k Bounty）</h2>
+      <div className="card">
+        <div className="row">
+          <div>
+            <div className="stat-label">passkey 认证</div>
+            <div className="small muted">
+              {meraAddress
+                ? `已派生账户：${meraAddress.slice(0, 10)}…${meraAddress.slice(-6)}`
+                : "尚未创建。点击后由浏览器/系统弹出 passkey 创建流程"}
+            </div>
+          </div>
+          <button
+            className="btn"
+            disabled={meraBusy}
+            onClick={async () => {
+              setMeraBusy(true);
+              setMeraMsg("");
+              try {
+                const { meraCreateAccount, meraLogin } = await import("@/lib/mera");
+                const name = "metrix-" + Math.random().toString(36).slice(2, 8);
+                const r = await meraCreateAccount(name);
+                setMeraAddress(r.address);
+                setMeraMsg("✅ passkey 账户已派生");
+              } catch (e) {
+                setMeraMsg("⚠ " + (e instanceof Error ? e.message : String(e)));
+              } finally {
+                setMeraBusy(false);
+              }
+            }}
+          >
+            {meraBusy ? "处理中…" : "创建 Mera Passkey"}
+          </button>
+        </div>
+        {meraMsg && <p className="small muted" style={{ margin: "8px 0 0" }}>{meraMsg}</p>}
+        {meraAddress && (
+          <p className="mono" style={{ margin: "8px 0 0", wordBreak: "break-all" }}>{meraAddress}</p>
+        )}
+      </div>
+      <p className="muted small">
+        该账户由你的 passkey 派生（无需助记词），后续用于 AUSD 余额展示与 Perpl 交易签名（D2/D3）。
+      </p>
 
       <h2>Perpl 永续模块（P1）</h2>
       <div className="card row">
