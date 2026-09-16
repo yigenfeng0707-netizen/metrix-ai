@@ -2,8 +2,9 @@ import "dotenv/config";
 
 export const config = {
   port: Number(process.env.PORT ?? 8787),
-  mode: (process.env.AGENT_MODE ?? "sim") as "sim" | "live",
-  pollIntervalMs: 3000,
+  // sim = 模拟行情+成交 | testnet = Kuru 测试网真实交易 | live = Kuru 主网
+  mode: (process.env.AGENT_MODE ?? "sim") as "sim" | "testnet" | "live",
+  pollIntervalMs: Number(process.env.POLL_INTERVAL_MS ?? 3000),
 
   // 模拟模式参数
   simPriceMin: Number(process.env.SIM_PRICE_MIN ?? 2950),
@@ -14,6 +15,8 @@ export const config = {
   privateKey: process.env.KURU_PRIVATE_KEY ?? "",
   marketAddress: process.env.KURU_MARKET_ADDRESS ?? "",
   marginAccountAddress: process.env.KURU_MARGIN_ACCOUNT_ADDRESS ?? "",
+  /** testnet/live 模式的报价规模（MON/笔，用于 AMM 隐含价格查询与 IOC 买单） */
+  quotePerTrade: Number(process.env.QUOTE_PER_TRADE ?? 0.0002),
 
   // Perpl（P1 永续模块）
   perpl: {

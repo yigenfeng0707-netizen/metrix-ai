@@ -21,7 +21,10 @@ function getSigner(): ethers.Wallet {
     throw new Error("Kuru live 模式需要配置 KURU_RPC_URL / KURU_PRIVATE_KEY（见 .env.example）");
   }
   const provider = new ethers.providers.JsonRpcProvider(config.rpcUrl);
-  return new ethers.Wallet(config.privateKey, provider);
+  const wallet = new ethers.Wallet(config.privateKey, provider);
+  // kuru-sdk 内嵌独立 ethers 副本 → instanceof Signer 跨实例失败，挂 getSigner 兜底
+  (wallet as unknown as { getSigner: () => ethers.Wallet }).getSigner = () => wallet;
+  return wallet;
 }
 
 /** 前置：向保证金账户充值（token 为 ERC-20 地址，amountHuman 为人类可读金额） */

@@ -1,5 +1,6 @@
 import { EventEmitter } from "node:events";
 import type { AccountState, DecisionEvent, StrategyParams, ParsedCommand } from "@metrix/shared";
+import { config } from "./config";
 import { persistDecision } from "./db/pg";
 
 export interface StoredCommand {
@@ -30,10 +31,17 @@ class Store extends EventEmitter {
     agentStatus: "running",
   };
 
-  params: StrategyParams = {
-    grid: { enabled: true, lower: 2950, upper: 3150, grids: 8, orderSize: 0.02 },
-    mr: { enabled: true, lookback: 40, zEntry: 1.8, orderSize: 0.01, cooldownMs: 20_000 },
-  };
+  // 策略参数按运行模式初始化：testnet 下网格间距 0.2%，与 AMM 单笔冲击匹配（自持振荡）
+  params: StrategyParams =
+    config.mode === "sim"
+      ? {
+          grid: { enabled: true, lower: 2950, upper: 3150, grids: 8, orderSize: 0.02 },
+          mr: { enabled: true, lookback: 40, zEntry: 1.8, orderSize: 0.01, cooldownMs: 20_000 },
+        }
+      : {
+          grid: { enabled: true, lower: 1.24e-6, upper: 1.26e-6, grids: 8, orderSize: 3000 },
+          mr: { enabled: true, lookback: 40, zEntry: 2.2, orderSize: 2000, cooldownMs: 30_000 },
+        };
 
   equity(): number {
     return (

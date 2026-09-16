@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type { DecisionEvent } from "@metrix/shared";
 import { config, riskLimits } from "../config";
-import { fetchSimBook } from "../market/kuru-feed";
+import { fetchSimBook, fetchTestnetBook } from "../market/kuru-feed";
+import { resetGrid } from "../strategy/grid";
 import { SignalHub } from "../strategy/signal-hub";
 import { evaluatePerpTrend, resetPerpTrend } from "../strategy/perp-trend";
 import { evaluateMlSignal, predictUp } from "../strategy/ml-signal";
@@ -43,8 +44,21 @@ export function startAgentLoop(): void {
       }
 
       // ---- 1. Perceive ----
-      const book = fetchSimBook(); // live: fetchKuruBook(...) + Perpl market-state WS
+      const book =
+        config.mode === "sim"
+          ? fetchSimBook()
+          : await fetchTestnetBook(); // testnet/live：Kuru AMM 隐含价格
       hub.push(book);
+
+      // ---- 1b. 网格自动重锚：价格漂出区间（AMM 价格随交易漂移）时，
+      // 以当前价为中心平移网格，保证自持振荡（spread 损耗在测试网可忽略） ----
+      const mid = (book.bestBid + book.bestAsk) / 2;
+      const span = store.params.grid.upper - store.params.grid.lower;
+      if (mid < store.params.grid.lower || mid > store.params.grid.upper) {
+        store.params.grid.lower = mid - span / 2;
+        store.params.grid.upper = mid + span / 2;
+        resetGrid();
+      }
 
       // ---- 2. Decide：现货组合策略（确定性，LLM 不进决策路径） ----
       const venue = config.mode === "sim" ? "sim" : "kuru";
