@@ -11,6 +11,7 @@
     "build": "tsc"
   },
   "dependencies": {
+    "@fastify/cors": "^11.3.0",
     "@fastify/websocket": "^11.0.0",
     "@kuru-labs/kuru-sdk": "latest",
     "@metrix/shared": "*",
