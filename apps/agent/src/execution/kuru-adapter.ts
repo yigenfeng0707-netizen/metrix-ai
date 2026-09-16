@@ -36,6 +36,25 @@ function getSigner(): ethers.Wallet {
   return wallet;
 }
 
+/** 公共测试网 RPC 偶发 ECONNRESET/超时——网络类错误指数退避重试（最多 3 次，总量 ~1.5s） */
+async function withRpcRetry<T>(fn: () => Promise<T>, label: string): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 0; i < 3; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      const msg = String((err as Error)?.message ?? err);
+      const isNetwork =
+        /ECONNRESET|ETIMEDOUT|ENOTFOUND|missing response|SERVER_ERROR|network|timeout/i.test(msg);
+      if (!isNetwork) throw err; // 非 network 错误（revert 等）不重试
+      console.warn(`[kuru] ${label} 网络错误，第 ${i + 1}/3 次重试: ${msg.slice(0, 80)}`);
+      await new Promise((r) => setTimeout(r, 500 * (i + 1)));
+    }
+  }
+  throw lastErr;
+}
+
 /** 前置：向保证金账户充值（token 为 ERC-20 地址，amountHuman 为人类可读金额） */
 export async function depositToMargin(
   token: string,
@@ -57,26 +76,28 @@ export async function depositToMargin(
 
 /** 限价单（GTC，postOnly 做 maker）—— live 模式下网格策略首选 */
 export async function placeLimit(intent: IntentOrder): Promise<string> {
-  const signer = getSigner();
-  const marketParams = await KuruSdk.ParamFetcher.getMarketParams(signer, config.marketAddress);
-  const order = {
-    price: intent.price!,
-    size: intent.size,
-    isBuy: intent.side === "buy",
-    postOnly: true,
-  };
-  // W1 验证点 ②：gas 估算 × 120% 缓冲
-  const gasEstimate = await KuruSdk.GTC.estimateGas(
-    signer,
-    config.marketAddress,
-    marketParams,
-    order,
-  );
-  const receipt = await KuruSdk.GTC.placeLimit(signer, config.marketAddress, marketParams, {
-    ...order,
-    txOptions: { gasLimit: gasEstimate.mul(120).div(100) },
-  });
-  return receipt.transactionHash;
+  return withRpcRetry(async () => {
+    const signer = getSigner();
+    const marketParams = await KuruSdk.ParamFetcher.getMarketParams(signer, config.marketAddress);
+    const order = {
+      price: intent.price!,
+      size: intent.size,
+      isBuy: intent.side === "buy",
+      postOnly: true,
+    };
+    // W1 验证点 ②：gas 估算 × 120% 缓冲
+    const gasEstimate = await KuruSdk.GTC.estimateGas(
+      signer,
+      config.marketAddress,
+      marketParams,
+      order,
+    );
+    const receipt = await KuruSdk.GTC.placeLimit(signer, config.marketAddress, marketParams, {
+      ...order,
+      txOptions: { gasLimit: gasEstimate.mul(120).div(100) },
+    });
+    return receipt.transactionHash;
+  }, `placeLimit ${intent.side}`);
 }
 
 /** 市价单（IOC + fillOrKill）—— R5 滑点保护通过链上 minAmountOut 强制
@@ -85,23 +106,25 @@ export async function placeLimit(intent: IntentOrder): Promise<string> {
  *  改用底层 constructMarketSellTransaction + sendTransaction。
  */
 export async function placeMarket(intent: IntentOrder, minAmountOut: string): Promise<string> {
-  const signer = getSigner();
-  const marketParams = await KuruSdk.ParamFetcher.getMarketParams(getProvider(), config.marketAddress);
-  const isMargin = true; // 保证金模式：使用保证金账户资金（W1 已验证）
-  const fillOrKill = true;
-  const tx =
-    intent.side === "buy"
-      ? await KuruSdk.IOC.constructMarketBuyTransaction(
-          signer, config.marketAddress, marketParams,
-          intent.size, minAmountOut, isMargin, fillOrKill,
-        )
-      : await KuruSdk.IOC.constructMarketSellTransaction(
-          signer, config.marketAddress, marketParams,
-          intent.size, minAmountOut, isMargin, fillOrKill,
-        );
-  const sent = await signer.sendTransaction(tx);
-  const receipt = await sent.wait(1);
-  return receipt.transactionHash;
+  return withRpcRetry(async () => {
+    const signer = getSigner();
+    const marketParams = await KuruSdk.ParamFetcher.getMarketParams(getProvider(), config.marketAddress);
+    const isMargin = true; // 保证金模式：使用保证金账户资金（W1 已验证）
+    const fillOrKill = true;
+    const tx =
+      intent.side === "buy"
+        ? await KuruSdk.IOC.constructMarketBuyTransaction(
+            signer, config.marketAddress, marketParams,
+            intent.size, minAmountOut, isMargin, fillOrKill,
+          )
+        : await KuruSdk.IOC.constructMarketSellTransaction(
+            signer, config.marketAddress, marketParams,
+            intent.size, minAmountOut, isMargin, fillOrKill,
+          );
+    const sent = await signer.sendTransaction(tx);
+    const receipt = await sent.wait(1);
+    return receipt.transactionHash;
+  }, `placeMarket ${intent.side}`);
 }
 
 /** 撤单 */

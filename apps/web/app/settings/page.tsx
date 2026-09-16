@@ -3,7 +3,15 @@
 import { useEffect, useState } from "react";
 import type { GridParams, MRParams } from "@metrix/shared";
 import { getOverview, updateMr, updateStrategy } from "@/lib/api";
-import { meraCreateAccount, meraLogin, meraErrorHint } from "@/lib/mera";
+import {
+  meraCreateAccount,
+  meraLogin,
+  meraErrorHint,
+  hasMeraCredential,
+  loadMeraAddress,
+  saveMeraAddress,
+  getAusdBalance,
+} from "@/lib/mera";
 
 export default function SettingsPage() {
   const [grid, setGrid] = useState<GridParams | null>(null);
@@ -11,6 +19,8 @@ export default function SettingsPage() {
   const [perp, setPerp] = useState<{ enabled: boolean; side: string } | null>(null);
   const [saved, setSaved] = useState(false);
   const [meraAddress, setMeraAddress] = useState<string | null>(null);
+  const [meraHasCred, setMeraHasCred] = useState(false);
+  const [ausd, setAusd] = useState<string>("");
   const [meraBusy, setMeraBusy] = useState(false);
   const [meraMsg, setMeraMsg] = useState("");
 
@@ -20,7 +30,23 @@ export default function SettingsPage() {
       setMr(d.mr);
       setPerp(d.perp);
     });
+    setMeraAddress(loadMeraAddress());
+    setMeraHasCred(hasMeraCredential());
   }, []);
+
+  /** 派生成功后统一处理：持久化地址 + 查 AUSD 余额（主网） */
+  async function afterDerived(addr: string) {
+    setMeraAddress(addr);
+    saveMeraAddress(addr);
+    setMeraHasCred(true);
+    setMeraMsg("✅ passkey 账户已派生，正在查询 AUSD 余额…");
+    try {
+      const bal = await getAusdBalance(addr);
+      setAusd(bal > 0 ? `${bal} AUSD` : "0 AUSD（主网，需充值）");
+    } catch {
+      setAusd("N/A（AUSD 为 Monad 主网资产，测试网不显示）");
+    }
+  }
 
   async function save() {
     if (!grid || !mr) return;
@@ -96,7 +122,9 @@ export default function SettingsPage() {
             <div className="small muted">
               {meraAddress
                 ? `已派生账户：${meraAddress.slice(0, 10)}…${meraAddress.slice(-6)}`
-                : "尚未创建。点击后由浏览器/系统弹出 passkey 创建流程"}
+                : meraHasCred
+                  ? "本机已有 passkey，点击登录重新派生同一账户"
+                  : "尚未创建。点击后由浏览器/系统弹出 passkey 创建流程"}
             </div>
           </div>
           <button
@@ -106,28 +134,31 @@ export default function SettingsPage() {
               setMeraBusy(true);
               setMeraMsg("");
               try {
-                const { meraCreateAccount, meraLogin } = await import("@/lib/mera");
-                const name = "metrix-" + Math.random().toString(36).slice(2, 8);
-                const r = await meraCreateAccount(name);
-                setMeraAddress(r.address);
-                setMeraMsg("✅ passkey 账户已派生");
+                // 已有 credential 时走登录（重新派生同一账户），否则创建新 passkey
+                const addr = hasMeraCredential()
+                  ? (await meraLogin()).address
+                  : (await meraCreateAccount("metrix-" + Math.random().toString(36).slice(2, 8))).address;
+                await afterDerived(addr);
               } catch (e) {
-                setMeraMsg("⚠ " + (e instanceof Error ? e.message : String(e)));
+                setMeraMsg("⚠ " + (e instanceof Error ? meraErrorHint(e) : String(e)));
               } finally {
                 setMeraBusy(false);
               }
             }}
           >
-            {meraBusy ? "处理中…" : "创建 Mera Passkey"}
+            {meraBusy ? "处理中…" : meraHasCred ? (meraAddress ? "重新验证 Passkey" : "登录 Passkey") : "创建 Mera Passkey"}
           </button>
         </div>
         {meraMsg && <p className="small muted" style={{ margin: "8px 0 0" }}>{meraMsg}</p>}
         {meraAddress && (
           <p className="mono" style={{ margin: "8px 0 0", wordBreak: "break-all" }}>{meraAddress}</p>
         )}
+        {meraAddress && ausd && (
+          <p className="small" style={{ margin: "8px 0 0" }}>AUSD 余额：<b>{ausd}</b></p>
+        )}
       </div>
       <p className="muted small">
-        该账户由你的 passkey 派生（无需助记词），后续用于 AUSD 余额展示与 Perpl 交易签名（D2/D3）。
+        该账户由你的 passkey 派生（无需助记词），后续用于 AUSD 余额展示与 Perpl 交易签名（D3）。
       </p>
 
       <h2>Perpl 永续模块（P1）</h2>
