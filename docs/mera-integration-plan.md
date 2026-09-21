@@ -15,7 +15,7 @@
 |---|---|---|---|
 | Mera 认证 | 用户通过 Mera passkey 登录 App | wagmi 浏览器钱包登录 | **Mera passkey 流程（本计划主体）** |
 | AUSD 余额 | App 内展示/持有 AUSD | 显示 MON/USDC | **AUSD 余额展示 + 充值引导** |
-| Perpl 交易 | 通过 Perpl 执行交易 | ✅ IOC margin 卖出已验证（tx 0x0b1b77cc） | 把执行账户切到 Mera 派生账户 |
+| Perpl 交易 | 通过 Perpl 执行交易 | 适配器已写，默认关闭；**尚无 Perpl 成交哈希**（Kuru IOC 0x0b1b77cc 不能当 Perpl 证据） | 测试网/主网下一笔真 Perpl 单 |
 
 ## 2. 技术方案（已核对官方文档）
 

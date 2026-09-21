@@ -217,17 +217,17 @@
         </div>
         <div class="card">
           <h3 style="margin-top:0">链上验证入口</h3>
-          <p style="color:var(--muted);font-size:13.5px">评审可直接查看 Agent 在 Kuru / Perpl 上的真实成交记录（Demo 环境于提交时更新）：</p>
+          <p style="color:var(--muted);font-size:13.5px">评审可点开 MonadScan 测试网查看 Agent 在 <strong>Kuru</strong> 上的成交（Perpl 尚未有公开成交哈希）：</p>
           <ul style="list-style:none;padding:0;margin-top:12px">
             <li style="padding:8px 0;border-bottom:1px solid var(--border)">
-              <span class="badge-ok">●</span>&nbsp; Kuru 成交记录
-              <div class="mono">explorer.kuru.io/…（待主网演示部署后填入）</div></li>
+              <span class="badge-ok">●</span>&nbsp; Kuru 保证金充值（Monad 测试网）
+              <div class="mono"><a href="https://testnet.monadscan.com/tx/0xe15c8218a6a64ae054b2cfb475cd7da15b86ebca9c23b007bb55ba3b241abb55">testnet.monadscan.com/tx/0xe15c8218…</a></div></li>
             <li style="padding:8px 0;border-bottom:1px solid var(--border)">
-              <span class="badge-ok">●</span>&nbsp; Monad 浏览器交易哈希
-              <div class="mono">explorer.monad.xyz/tx/0x…（待填入）</div></li>
+              <span class="badge-ok">●</span>&nbsp; Kuru IOC 保证金卖出（不是 Perpl）
+              <div class="mono"><a href="https://testnet.monadscan.com/tx/0x0b1b77cca2023b9676ec62be5ecd7ebcf0763b02d2b86c734a8af405931447a7">testnet.monadscan.com/tx/0x0b1b77cc…</a></div></li>
             <li style="padding:8px 0">
-              <span class="badge-ok">●</span>&nbsp; 决策审计流（本页 Demo 联动本地 Agent）
-              <div class="mono" id="live-stats">连接本地 Agent：http://localhost:8787</div></li>
+              <span class="badge-ok">●</span>&nbsp; 公网体验（首轮）
+              <div class="mono" id="live-stats">本页 GitHub Pages HTTPS · 完整 App 见仓库 README（勿把 localhost 当评审链接）</div></li>
           </ul>
         </div>
       </div>
@@ -241,8 +241,8 @@
       <div class="grid3">
         <div class="card"><div class="ico">📦</div><h3>Monorepo</h3>
           <p>apps/agent（Fastify+WS）· apps/web（Next.js PWA）· packages/shared（共享类型）· ml/（PyTorch）</p></div>
-        <div class="card"><div class="ico">🧪</div><h3>CI + 15 个单元测试</h3>
-          <p>GitHub Actions：typecheck + 风控/策略测试，每次 push 自动运行。</p></div>
+        <div class="card"><div class="ico">🧪</div><h3>CI + 单元测试</h3>
+          <p>GitHub Actions：typecheck + 风控/策略/R5 滑点下限测试，每次 push 自动运行。</p></div>
         <div class="card"><div class="ico">🐳</div><h3>一键复现</h3>
           <p><span class="mono">docker compose up</span> 全栈（含 PostgreSQL 与 ML 服务），或 <span class="mono">npm run dev:agent + dev:web</span>。</p></div>
       </div>
@@ -266,7 +266,8 @@
     const r = await fetch("http://localhost:8787/vaults/demo/overview");
     const d = await r.json();
     const el = document.getElementById("live-stats");
-    el.innerHTML = `实时联动成功：净值 $${d.equity.toFixed(2)} · 决策 ${d.stats.totalDecisions} 笔 · 落库 ${d.db?.decisions ?? 0} 条`;
+    const el = document.getElementById("live-stats");
+    el.innerHTML = `本机 Agent 在线（开发者）：净值 $${d.equity.toFixed(2)} · 决策 ${d.stats.totalDecisions} 笔。评审请用本页 HTTPS，勿填 localhost。`;
   } catch { /* 静态占位保留 */ }
 })();
 </script>

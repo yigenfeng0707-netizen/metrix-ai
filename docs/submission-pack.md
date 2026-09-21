@@ -19,7 +19,7 @@ An autonomous AI trading agent on Monad that spots on Kuru, perps on Perpl — e
 
 ### Short description (~300 chars)
 ```
-Metrix AI is an autonomous trading agent on Monad. Spot orders route through Kuru's fully-onchain orderbook, perpetuals through Perpl. Three deterministic strategies run behind six hard-coded risk rules. The LLM only parses natural-language commands — it never touches trading decisions. Every trade leaves an on-chain proof.
+Metrix AI is an autonomous trading agent on Monad. Spot routes through Kuru's onchain CLOB; a Perpl adapter exists but is not live-verified. Deterministic strategies sit behind six risk rules. Chat commands use an offline parser (not a live LLM). Verified Kuru testnet txs are linked from the homepage.
 ```
 
 ### Links
@@ -28,7 +28,7 @@ Metrix AI is an autonomous trading agent on Monad. Spot orders route through Kur
 | GitHub repo | https://github.com/yigenfeng0707-netizen/metrix-ai |
 | Project homepage | https://yigenfeng0707-netizen.github.io/metrix-ai/ |
 | Demo video | （10/9-11 拍摄后填 B 站/YouTube 链接） |
-| Live app / Demo | 本地运行：`npm install` → `npm run dev:agent` → `npm run dev:web`（Docker 一键：`docker compose up`） |
+| Live app / Demo | https://yigenfeng0707-netizen.github.io/metrix-ai/ |
 
 ---
 
@@ -41,24 +41,24 @@ AI agents can chat, but almost none of them can actually trade. The ones that "t
 SOLUTION
 Metrix AI is an autonomous trading agent deployed on Monad. It manages a vault, executes trades through Kuru's fully-onchain CLOB (spot) and Perpl (perpetuals), and exposes every decision in a live, auditable feed: signal snapshot → rule triggered → risk verdict → on-chain transaction proof.
 
-KEY DESIGN PRINCIPLE: the LLM never touches trading decisions.
-All trading signals come from deterministic, backtestable strategies (grid, mean-reversion with trend filtering, and an LSTM direction model served from a PyTorch GPU service). The LLM's only jobs are parsing natural-language commands into structured parameters and writing human-readable decision summaries — under a strict JSON schema, always subject to user confirmation and risk re-validation.
+KEY DESIGN PRINCIPLE: the model never touches trading decisions.
+All trading signals come from deterministic, backtestable strategies (grid, mean-reversion with trend filtering, and an optional LSTM direction model). Natural-language commands are parsed into structured parameters (currently an offline regex fallback; LLM structured-output is a later swap) and always require a user confirmation card plus a second RiskGate pass.
 
 RISK ENGINE (the core differentiator)
 Six hard rules enforced server-side, with caps the UI can tighten but never loosen:
-R1 per-order cap ≤ 5% of equity · R2 per-market exposure ≤ 30% · R3 daily-loss halt at -3% (new positions blocked) · R4 max-drawdown kill-switch at -10% (flatten all + pause) · R5 on-chain slippage enforcement (minAmountOut) · R6 idempotency + per-market rate limiting.
+R1 per-order cap ≤ 5% of equity · R2 per-market exposure ≤ 30% · R3 daily-loss halt at -3% (new positions blocked) · R4 max-drawdown kill-switch at -10% (flatten all + pause) · R5 Kuru IOC minAmountOut from CostEstimator × (1 − 50 bps) · R6 idempotency + per-market rate limiting.
 
 WHAT'S BUILT (all working at submission time)
 - Autonomous agent loop: perceive → decide → risk-gate → execute → audit, with WebSocket push of every decision
 - Live trading on Monad testnet: real margin deposit and real IOC margin sell executed on Kuru (tx hashes in README and below)
-- Mobile-first PWA with 5 screens: vault overview, live decision stream, portfolio, chat commands, strategy settings
+- Mobile-first 5 screens (Next.js; PWA manifest not shipped yet)
 - PostgreSQL write-through persistence of every decision and order
-- Docker Compose full stack (agent, web, ML service, PostgreSQL, Redis) and GitHub Actions CI with 15 unit tests
+- Docker Compose full stack (agent, web, ML service, PostgreSQL, Redis) and GitHub Actions CI with unit tests (risk + strategies + R5 floor)
 
-ON-CHAIN VERIFICATION (Monad testnet)
-- Margin deposit: 0xe15c8218a6a64ae054b2cfb475cd7da15b86ebca9c23b007bb55ba3b241abb55
-- IOC margin sell: 0x0b1b77cca2023b9676ec62be5ecd7ebcf0763b02d2b86c734a8af405931447a7
-(Sign in with the same wallet on Kuru testnet app to see positions.)
+ON-CHAIN VERIFICATION (Monad testnet, Kuru — not Perpl)
+- Margin deposit: https://testnet.monadscan.com/tx/0xe15c8218a6a64ae054b2cfb475cd7da15b86ebca9c23b007bb55ba3b241abb55
+- IOC margin sell: https://testnet.monadscan.com/tx/0x0b1b77cca2023b9676ec62be5ecd7ebcf0763b02d2b86c734a8af405931447a7
+(These are Kuru margin-account / orderbook txs. Perpl fills are not verified on-chain yet.)
 
 TEAM
 Solo builder (fengyigen) — full-stack (Next.js/Node/TS), DeFi integrations (Kuru SDK, Perpl API), ML (PyTorch), infrastructure (Docker, CI, PostgreSQL).
@@ -82,7 +82,7 @@ Metrix AI is a focused spot trading product that routes every trade through Kuru
 What we built on top of Kuru:
 - Spot execution layer powered by @kuru-labs/kuru-sdk: market params fetching (price/size precision, tick size), GTC post-only limit orders, IOC market orders with isMargin=true, margin account deposits, and OrderCreated event parsing for order tracking.
 - A consumer-grade mobile-first PWA (not a trading terminal): users see a simple vault balance, a live "decision stream" written in plain language, and one-tap actions — the CLOB complexity is hidden behind risk-managed strategies.
-- Verified end-to-end on Monad testnet with real transactions: margin deposit 0xe15c8218a6a64ae054b2cfb475cd7da15b86ebca9c23b007bb55ba3b241abb55 and IOC margin sell 0x0b1b77cca2023b9676ec62be5ecd7ebcf0763b02d2b86c734a8af405931447a7 (MON-USDC market, orderbook 0xa241896A7Dbe8a550D2E5fF7A914bB1989ceD2D9).
+- Verified end-to-end on Monad testnet: margin deposit https://testnet.monadscan.com/tx/0xe15c8218a6a64ae054b2cfb475cd7da15b86ebca9c23b007bb55ba3b241abb55 and IOC margin sell https://testnet.monadscan.com/tx/0x0b1b77cca2023b9676ec62be5ecd7ebcf0763b02d2b86c734a8af405931447a7 (orderbook 0xa241896A7Dbe8a550D2E5fF7A914bB1989ceD2D9).
 
 Consumer angle: the user never touches an order ticket. They set a risk profile in plain language; our strategies (grid + mean-reversion + ML signal) generate the orders, our risk engine gates them, and Kuru's CLOB executes them — with every fill linked from the UI.
 ```
@@ -90,15 +90,14 @@ Consumer angle: the user never touches an order ticket. They set a risk profile 
 ### 4.2 Best use of Perpl's API — $5,000（Perpl · All tracks）
 
 ```
-Metrix AI is a production-ready trading bot and automation system built around Perpl.
+Metrix AI includes a Perpl adapter so the same agent loop can route perpetual intents through Perpl's documented REST + trading WebSocket (mt:29 auth, mt:22 orders, mt:24 fills).
 
-What we built with Perpl:
-- The agent's perpetual execution layer is designed around Perpl's REST/WS architecture: REST for account state and history (fills, order history, position history with cursor pagination), WebSocket for market state (oracle/mark/last prices, OI, TVL) and order placement.
-- An autonomous margin-trading flow: the agent computes position sizing from vault equity, gates it through its risk engine (order cap, exposure limit, daily-loss halt, max-drawdown kill-switch), and submits IOC market orders with slippage protection.
-- IOC margin sell verified on Monad testnet: tx 0x0b1b77cca2023b9676ec62be5ecd7ebcf0763b02d2b86c734a8af405931447a7 (isMargin=true path, executed against the agent's margin funds).
-- Real-time risk monitoring consumes the same WS streams: unrealized PnL and exposure feed the kill-switch logic (R4) that can flatten all positions without human intervention.
+Honest status as of 2026-09-21:
+- Code: apps/agent/src/execution/perpl-adapter.ts and apps/agent/src/market/perpl-rest.ts implement the protocol (Ed25519 sign-in, IOC flags, reconnect backoff).
+- Runtime: PERPL_ENABLED defaults to false. We have NOT submitted a live Perpl order and have NO Perpl fill hash to show.
+- Do not treat Kuru tx 0x0b1b77cc… as Perpl evidence — that hash is a Kuru orderbook IOC margin sell on Monad testnet.
 
-Why it matters: most "AI trading" demos call a CEX API. Metrix AI automates a fully on-chain perpetual venue on Monad, with the risk layer enforcing hard caps that a UI cannot bypass.
+Why it still belongs on this bounty: the adapter is venue-shaped (IntentOrder in, signed WS frame out) and sits behind the same RiskGate as Kuru. Live Perpl verification is the next milestone before final submission (feature freeze 10/5).
 ```
 
 ### 4.3 Best Analytics / Risk Tool — $3,000（Perpl · Track 01）
@@ -111,7 +110,7 @@ R1 per-order notional ≤ 5% of live equity; R2 per-market exposure ≤ 30%; R3 
 
 The engine is fully observable: every verdict (pass or reject, with the exact rule and numbers) is written to a decision feed the user sees in real time on mobile, and persisted to PostgreSQL for post-hoc audit. Risk caps are hard-coded server-side; the product UI can tighten them but cannot loosen them beyond the ceiling — a deliberate design choice for user trust.
 
-Live demo: the submission video shows a daily-loss halt firing automatically and the agent refusing new risk while still allowing position closes.
+Observability today: every RiskGate verdict is pushed over WebSocket to the Trade screen and persisted to PostgreSQL when DATABASE_URL is set. Demo video (R3 halt close-up) is scheduled 10/9–10/11 — not recorded yet.
 ```
 
 ### 4.4 Best Agent Wallet Plugin — $2,500（MetaMask · Track 01）
@@ -121,25 +120,25 @@ We built an agent-executor wallet layer that gives an AI agent a safe, venue-agn
 
 The execution layer abstracts the wallet behind a single IntentOrder interface (clientOrderId, venue, side, type, price, size, reason). Adapters implement quote/execute/cancel/positions per venue: today Kuru (onchain CLOB via official SDK) and Perpl (perp WS flow), with a simulation venue for safe testing. The agent wallet signs with a dedicated hot key whose capabilities are constrained by the risk engine — the wallet cannot sign an order the RiskGate has not approved.
 
-This is exactly the plugin shape a MetaMask Agent Wallet integration needs: intent in (LLM-parsed, risk-checked), signed transaction out, full audit trail back to the caller. The next milestone is packaging the executor as a MetaMask Agent Wallet plugin so an external agent can call it through the same interface.
+This is the plugin shape a MetaMask Agent Wallet integration needs: intent in (parsed, risk-checked), signed transaction out, full audit trail back to the caller. The next milestone is packaging the executor as a MetaMask Agent Wallet plugin so an external agent can call it through the same interface.
 
-Verified on Monad testnet: margin deposit 0xe15c8218… and IOC margin sell 0x0b1b77cc… executed by this wallet layer.
+Verified on Monad testnet via this wallet layer (Kuru, not Perpl):
+https://testnet.monadscan.com/tx/0xe15c8218a6a64ae054b2cfb475cd7da15b86ebca9c23b007bb55ba3b241abb55
+https://testnet.monadscan.com/tx/0x0b1b77cca2023b9676ec62be5ecd7ebcf0763b02d2b86c734a8af405931447a7
 ```
 
 ### 4.5 Best Mobile Trading App on Monad — $10,000（Agora · Track 01）
 
 ```
-Metrix AI ships as a mobile-first PWA for autonomous trading on Monad: installable to the home screen, five purpose-built screens (vault, live decision stream, portfolio, chat commands, strategy settings), all interactions designed one-thumb-first.
+Metrix AI is a mobile-first Next.js shell (five screens: vault, live decision stream, portfolio, chat commands, strategy settings) with Mera passkey auth and AUSD/MON balance + funding toward the agent vault.
 
-Trading flow aligned with the Agora bounty: the app authenticates the user wallet, the agent vault holds funds, and trades execute through Perpl (margin IOC flow verified on-chain: 0x0b1b77cca2023b9676ec62be5ecd7ebcf0763b02d2b86c734a8af405931447a7) with spot on Kuru.
-
-Planned before final submission: Mera passkey onboarding and an AUSD funding leg to match the bounty's full spec (passkey auth → AUSD balance → Perpl trades). The Perpl execution and mobile shell are already live.
+Honest status as of 2026-09-21:
+- Mera passkey register/login and AUSD balance read are implemented in apps/web/lib/mera.ts (needs HTTPS + matching rpId; GitHub Pages hostname is the round-1 public surface).
+- Verified on-chain activity is Kuru testnet (deposit 0xe15c8218… / IOC 0x0b1b77cc…), not Perpl.
+- Perpl live fills and a packaged PWA (manifest / service worker) are still in progress. Do not claim the Kuru IOC hash as a Perpl trade.
 ```
 
-> ⚠️ 自用备注：此 Bounty 要求 Mera passkey 登录 + AUSD 余额，我们目前用 wagmi 钱包 + MON/USDC。两条路：
-> ① 10 月前接入 Mera passkey + AUSD 计价（工作量 2-3 天，命中 $10k 概率大增）
-> ② 时间不够则按上面文案诚实提交（Perpl 交易部分完全符合，Mera/AUSD 标注 in progress）
-> 拍板时间：10/5 功能冻结前。
+> 自用备注：Mera D1–D3 代码已进仓；评审公网目前是 GitHub Pages 静态主页，完整 App（Next+Agent）尚未部署稳定 HTTPS。Agora 全 spec 仍缺 Perpl 真成交 + 可安装 PWA。
 
 ### 4.6 Best Community Team Project — $5,000（Monad Foundation · All tracks）
 
@@ -180,8 +179,8 @@ We also participate in the community loop: Monad Developers Discord, and we shar
 
 | 问题 | 要点 |
 |---|---|
-| 为什么信 LLM 不乱交易？ | LLM 不在决策路径上，只做意图解析；所有交易由确定性策略+风控产生，JSON Schema 白名单+确认卡+风控复核三层约束 |
-| 网格策略在单边行情会亏吧？ | 会，这正是趋势过滤（EMA 休眠）+R4 回撤强平存在的原因；回测报告在仓库 |
+| 为什么信 LLM 不乱交易？ | 交易决策路径没有模型。当前自然语言是正则兜底解析 + 确认卡 + RiskGate；接 LLM 后仍不能绕过风控。 |
+| 网格策略在单边行情会亏吧？ | 会，这正是趋势过滤（EMA 休眠）+R4 回撤强平存在的原因 |
 | Agent 钱包安全吗？ | 专用热钱包只放演示小额；六条硬规则服务端强制；恢复路径：R4 自动全平 |
 | 和只调 GPT-4 写交易代码有什么区别？ | 每笔交易有完整审计链：信号快照、规则命中、风控裁决、tx hash，全部可回放；黑箱不可审计 |
-| 后续计划？ | Mera passkey + AUSD（Agora bounty 全 spec）、会话密钥替代热钱包、Perpl 组合保证金 |
+| 后续计划？ | 公网 HTTPS 部署 Next+Agent、Perpl 真成交验证、可安装 PWA、Demo 视频 |

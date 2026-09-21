@@ -48,7 +48,7 @@ export function checkRisk(intent: IntentOrder, account: AccountState): RiskVerdi
   if (exposure > eq * riskLimits.maxExposurePct) {
     return fail("R2-exposure", `该市场敞口将达 $${exposure.toFixed(2)}，超过净值 ${(riskLimits.maxExposurePct * 100).toFixed(0)}% 上限`);
   }
-  // R5 滑点保护：live 模式下由 CostEstimator 计算 minAmountOut（见 kuru-adapter）
+  // R5 滑点保护：Kuru 执行路径在 router → computeMinAmountOut 用 CostEstimator 写入链上 minAmountOut
   return { passed: true, detail: "all checks passed" };
 }
 

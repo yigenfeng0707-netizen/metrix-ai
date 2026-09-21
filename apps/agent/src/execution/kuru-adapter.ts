@@ -1,7 +1,54 @@
 import { ethers } from "ethers";
 import * as KuruSdk from "@kuru-labs/kuru-sdk";
 import type { IntentOrder } from "@metrix/shared";
-import { config } from "../config";
+import { config, riskLimits } from "../config";
+
+/** R5：把 CostEstimator 输出按滑点 bps 打成下限（纯函数，便于单测）。 */
+export function floorWithSlippage(estimatedOut: number, slippageBps: number): number {
+  if (!(estimatedOut > 0) || !Number.isFinite(estimatedOut)) {
+    throw new Error("R5: estimated output must be a positive finite number");
+  }
+  if (slippageBps < 0 || slippageBps >= 10_000) {
+    throw new Error("R5: slippage bps out of range");
+  }
+  return estimatedOut * (1 - slippageBps / 10_000);
+}
+
+function toMinAmountRaw(human: number, decimals: number): string {
+  const places = Math.min(Math.max(0, Math.floor(decimals)), 18);
+  return ethers.utils.parseUnits(human.toFixed(places), places).toString();
+}
+
+/**
+ * R5：用官方 CostEstimator 报价，再按 maxSlippageBps 计算链上 minAmountOut（整数 raw string）。
+ * 询价失败则抛错，由执行层记为 rejected——不允许再退回 "0"（等于关掉滑点保护）。
+ */
+export async function computeMinAmountOut(intent: IntentOrder): Promise<string> {
+  const provider = getProvider();
+  const marketParams = await KuruSdk.ParamFetcher.getMarketParams(provider, config.marketAddress);
+  const size = Number(intent.size);
+  if (!Number.isFinite(size) || size <= 0) {
+    throw new Error("R5: invalid order size for slippage estimate");
+  }
+  if (intent.side === "buy") {
+    const est = await KuruSdk.CostEstimator.estimateMarketBuy(
+      provider,
+      config.marketAddress,
+      marketParams,
+      size,
+    );
+    const minHuman = floorWithSlippage(est.output, riskLimits.maxSlippageBps);
+    return toMinAmountRaw(minHuman, Number(marketParams.baseAssetDecimals));
+  }
+  const est = await KuruSdk.CostEstimator.estimateMarketSell(
+    provider,
+    config.marketAddress,
+    marketParams,
+    size,
+  );
+  const minHuman = floorWithSlippage(est.output, riskLimits.maxSlippageBps);
+  return toMinAmountRaw(minHuman, Number(marketParams.quoteAssetDecimals));
+}
 
 /**
  * Kuru 真实执行适配器（live 模式）。

@@ -1,10 +1,12 @@
 /**
  * 单元测试（零依赖，node:assert + tsx 运行）
- * 覆盖：风控引擎 R1/R3/R4/R6、网格策略、均值回归 + 趋势过滤
+ * 覆盖：风控引擎 R1/R3/R4/R6、R5 滑点下限、网格策略、均值回归 + 趋势过滤
  * 运行：npm test（apps/agent）
  */
 import assert from "node:assert/strict";
 import { checkRisk, markOrderSent } from "../src/risk/risk-gate";
+import { floorWithSlippage } from "../src/execution/kuru-adapter";
+import { riskLimits } from "../src/config";
 import { store } from "../src/store";
 import { evaluateGrid, resetGrid } from "../src/strategy/grid";
 import { evaluateMeanReversion, isStrongTrend, emaSeries, resetMeanReversion } from "../src/strategy/mean-reversion";
@@ -204,6 +206,23 @@ t("冷却期内不重复信号", () => {
     const second = evaluateMeanReversion(book, noise, p, "sim");
     assert.equal(second, null);
   }
+});
+
+// ---------------- R5 滑点下限 ----------------
+console.log("\n[r5-slippage]");
+
+t("50 bps 把 1.0 打成 0.995", () => {
+  assert.equal(floorWithSlippage(1, 50), 0.995);
+});
+
+t("与配置 maxSlippageBps 一致：100 → 99.5% 下限", () => {
+  const out = floorWithSlippage(100, riskLimits.maxSlippageBps);
+  assert.equal(out, 99.5);
+});
+
+t("非正预估抛错（禁止退回 minAmountOut=0）", () => {
+  assert.throws(() => floorWithSlippage(0, 50));
+  assert.throws(() => floorWithSlippage(-1, 50));
 });
 
 // ---------------- 汇总 ----------------

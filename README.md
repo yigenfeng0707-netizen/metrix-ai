@@ -6,6 +6,13 @@
 [![CI](https://github.com/yigenfeng0707-netizen/metrix-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/yigenfeng0707-netizen/metrix-ai/actions/workflows/ci.yml)
 [![Homepage](https://img.shields.io/badge/homepage-metrix--ai-blue)](https://yigenfeng0707-netizen.github.io/metrix-ai/)
 
+**评审体验链接（HTTPS）：** https://yigenfeng0707-netizen.github.io/metrix-ai/  
+完整五屏 App 仍需本地或 Docker；部署说明见 `docs/deploy-https.md`。不要把 localhost 填进报名表。
+
+链上验证（Monad 测试网，**Kuru**）：
+- 充值 https://testnet.monadscan.com/tx/0xe15c8218a6a64ae054b2cfb475cd7da15b86ebca9c23b007bb55ba3b241abb55
+- IOC 卖出 https://testnet.monadscan.com/tx/0x0b1b77cca2023b9676ec62be5ecd7ebcf0763b02d2b86c734a8af405931447a7
+
 ## 快速开始（Sim 模式，无需任何链上配置）
 
 ```bash

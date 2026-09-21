@@ -11,7 +11,7 @@ export interface ExecutionResult {
  * 执行路由：venue 无关分发。
  * sim  → 模拟成交（Demo / 联调）
  * kuru → KuruSdk 真实下单（live）
- * perpl→ Perpl REST API（W3 接入，见 perpl-adapter TODO）
+ * perpl→ Perpl 交易 WS（适配器已写；默认 PERPL_ENABLED=false，尚未主网/测试网成交验证）
  */
 export async function execute(intent: IntentOrder): Promise<ExecutionResult> {
   if (intent.venue === "sim") {
@@ -20,9 +20,8 @@ export async function execute(intent: IntentOrder): Promise<ExecutionResult> {
   }
 
   if (intent.venue === "kuru") {
-    const { placeMarket } = await import("./kuru-adapter");
-    // R5 滑点保护：minAmountOut 由 CostEstimator.estimateMarketBuy 计算（W1 实现）
-    const minAmountOut = "0";
+    const { placeMarket, computeMinAmountOut } = await import("./kuru-adapter");
+    const minAmountOut = await computeMinAmountOut(intent);
     const txHash = await placeMarket(intent, minAmountOut);
     return { status: "executed", txHash, fillPrice: intent.price };
   }
