@@ -1,0 +1,38 @@
+name: Deploy to ModelScope Studio
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: modelscope-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate required secrets
+        env:
+          MODELSCOPE_API_TOKEN: ${{ secrets.MODELSCOPE_API_TOKEN }}
+          MS_STUDIO_OWNER: ${{ secrets.MS_STUDIO_OWNER }}
+          MS_STUDIO_NAME: ${{ secrets.MS_STUDIO_NAME }}
+        run: |
+          missing=0
+          for name in MODELSCOPE_API_TOKEN MS_STUDIO_OWNER MS_STUDIO_NAME; do
+            [ -z "${!name}" ] && echo "::error::Missing $name" && missing=1
+          done
+          exit "$missing"
+
+      - name: Sync Studio Git + POST deploy + poll Running
+        env:
+          MODELSCOPE_API_TOKEN: ${{ secrets.MODELSCOPE_API_TOKEN }}
+          MS_STUDIO_OWNER: ${{ secrets.MS_STUDIO_OWNER }}
+          MS_STUDIO_NAME: ${{ secrets.MS_STUDIO_NAME }}
+          MODELSCOPE_ENDPOINT: https://modelscope.cn
+          GITHUB_SHA: ${{ github.sha }}
+        run: bash ms_deploy/deploy.sh

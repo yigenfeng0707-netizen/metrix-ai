@@ -29,6 +29,12 @@ export async function buildServer() {
     });
   });
 
+  app.get("/healthz", async () => ({
+    ok: true,
+    mode: config.mode,
+    version: process.env.METRIX_DEPLOY_VERSION ?? process.env.GITHUB_SHA ?? "dev",
+  }));
+
   // ---------- REST ----------
   app.get("/vaults/demo/overview", async () => ({
     vault: { id: "demo", name: "Metrix Demo Vault", agent: "Metrix Agent v0.1" },

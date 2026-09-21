@@ -13,7 +13,12 @@ export function useAgentStream(
     let retry: ReturnType<typeof setTimeout>;
 
     const connect = () => {
-      ws = new WebSocket(httpToWs(AGENT_URL) + "/ws");
+      const httpBase =
+        AGENT_URL ||
+        (typeof window !== "undefined"
+          ? `${window.location.protocol}//${window.location.host}`
+          : "http://127.0.0.1:8787");
+      ws = new WebSocket(`${httpToWs(httpBase)}/ws`);
       ws.onmessage = (e) => {
         try {
           const msg = JSON.parse(e.data as string) as { type: string; payload: unknown };
