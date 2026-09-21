@@ -150,7 +150,7 @@ Everything is public from day one: the GitHub repo carries a complete commit his
 We also participate in the community loop: Monad Developers Discord, and we share our Kuru/Perpl integration notes with other Metropolis builders on request.
 ```
 
-> 自用备注：若该 Bounty 需要证明"社区支持者"身份（如加入 Monad Devs Discord 拿 role），9 月内完成 Discord 加入。
+> 自用备注：Community bounty 官方交付物是 Profile 勾选已认证 community（已填 OpenBuild），不是 Discord handle。Discord 进服拿 Metropolis role 是 Dashboard 推荐卡，9/22 Submit 不依赖它。飞书不能替代。
 
 ---
 

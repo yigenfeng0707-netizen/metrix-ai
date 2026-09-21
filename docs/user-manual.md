@@ -45,7 +45,7 @@ Docker 全栈：`docker compose up -d --build`（默认仍是 sim）。
 
 | 现象 | 原因 |
 |---|---|
-| 主页「Demo 视频」是占位 | 拍摄窗口 10/9–11，尚未录 |
+| 主页「Demo 视频」是占位 | 9/21 已收口分镜；成片未录。短版可对着公网 sim App 拍 |
 | Chat 只认少量中英句子 | 当前是正则兜底，不是在线大模型 |
 | Settings 里 Mera 失败 | 需在 App 域名 HTTPS 下用支持 PRF 的浏览器；rpId 绑定 `gsym236998-metrix-ai.ms.show` |
 | 想看真实下单 | 配置 `apps/agent/.env` 后 `AGENT_MODE=testnet`；私钥只放本机 |

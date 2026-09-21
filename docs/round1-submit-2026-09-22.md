@@ -3,6 +3,7 @@
 > 状态：**尚未提交**。本页只是把表单字段准备好。9/21 写就，9/22 打开 https://hackathon.monad.xyz/ 后人工粘贴。
 > 体验链接填魔搭 App HTTPS，禁止 localhost / ngrok / cloudflared。GitHub Pages 只作项目介绍页。
 > 英文进表单；中文是操作备注。
+> **Discord：** Profile 的 Discord 为 optional。Dashboard「Join the server / Metropolis role」不在 Next steps 五步里。大陆打不开 Discord **不阻塞 9/22 Submit**。飞书不能填进 Discord 栏，也换不了 Metropolis role。
 
 ## 操作顺序（9/22）
 

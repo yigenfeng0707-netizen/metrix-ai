@@ -85,8 +85,8 @@
       <span class="chip money">奖金路径 $25,500</span>
     </div>
     <h1>Metrix AI<br><span class="grad">不止会聊天的 Agent，会交易的 Agent。</span></h1>
-    <p class="sub">部署在 Monad 上的自主 AI 交易 Agent：现货在 Kuru 全链上订单簿执行，永续在 Perpl 执行。
-      三套确定性策略 + 六条硬风控 + LLM 意图解析，每一笔决策都可审计、可回放、链上可验证。</p>
+    <p class="sub">Monad 上的自主交易 Agent：现货走 Kuru 全链订单簿（测试网已有成交）。Perpl 适配器已写、尚未直播成交。
+      三套确定性策略 + 六条服务端风控；自然语言目前是离线解析，不是生产 LLM。</p>
     <p class="sub-en">"The agent that doesn't just chat — it trades." — built on Monad, verifiable on-chain.</p>
     <div class="cta">
       <a class="btn primary" href="https://gsym236998-metrix-ai.ms.show">打开 App ↗</a>
@@ -104,8 +104,8 @@
       <div class="grid3">
         <div class="card">
           <div class="ico">🧠</div>
-          <h3>确定性策略引擎，LLM 不碰钱</h3>
-          <p>信号全部来自可回测的确定性规则，LLM 只做自然语言解析。每个决策可解释、可复现。</p>
+          <h3>确定性策略引擎，模型不碰钱</h3>
+          <p>信号来自可回测规则。Chat 当前是离线解析 + 确认卡；即使以后接 LLM 也不能绕过 RiskGate。</p>
           <ul>
             <li>网格策略：格位穿越触发，GTC postOnly 做市</li>
             <li>均值回归：VWAP±kσ 反向入场 + EMA 趋势过滤</li>
@@ -128,7 +128,7 @@
           <p>现货走 Kuru 官方 SDK，每一笔都落在 Monad 公开订单簿合约上；决策理由与 tx hash 绑定存档。</p>
           <ul>
             <li>信号快照 → 规则命中 → 风控裁决 → tx 链接</li>
-            <li>移动端 PWA 实时决策流</li>
+            <li>五屏移动端壳（PWA 安装包尚未发布）</li>
             <li>PostgreSQL write-through 持久化</li>
           </ul>
         </div>
@@ -142,8 +142,8 @@
       <p class="sec-sub">充值 → 自主交易 → 逐笔审计 → 一句话指挥 → 风控熔断演示。</p>
       <div class="video" id="video-placeholder">
         <div class="play">▶</div>
-        <div>Demo 视频将于 10 月 9 日上线（提交截止 10/13）</div>
-        <div class="small">在此之前，欢迎直接克隆仓库本地运行：<span class="mono">npm install && npm run dev:agent && npm run dev:web</span></div>
+        <div>Demo 视频尚未拍摄（脚本已收口；短版可按公网 sim App 录）。提交截止以平台 10/14 11:59 GMT+8 为准。</div>
+        <div class="small">先打开公网 App：<span class="mono">https://gsym236998-metrix-ai.ms.show</span>（不要把 localhost 当评审链接）</div>
       </div>
     </div>
   </section>
@@ -161,7 +161,7 @@
           </defs>
           <!-- 前端 -->
           <rect x="30" y="20" width="700" height="64" rx="12" fill="#121826" stroke="#1f2739"/>
-          <text x="60" y="48" fill="#e6e9f2" font-size="15" font-weight="600">前端 · Next.js PWA（mobile-first）</text>
+          <text x="60" y="48" fill="#e6e9f2" font-size="15" font-weight="600">前端 · Next.js 五屏（mobile-first；PWA 未装）</text>
           <text x="60" y="70" fill="#8a93a8" font-size="12">金库看板 · 实时决策流 · 自然语言指令 · 策略设置（WebSocket 推送）</text>
           <!-- Agent 主循环 -->
           <rect x="30" y="118" width="700" height="128" rx="12" fill="#121826" stroke="#4f8cff" stroke-opacity=".45"/>
@@ -179,14 +179,14 @@
           <line x1="440" y1="192" x2="458" y2="192" stroke="#4f8cff" marker-end="url(#arr)"/>
           <!-- 存储 -->
           <rect x="30" y="180" width="0" height="0"/>
-          <text x="720" y="146" fill="#8a93a8" font-size="11" text-anchor="end">LLM 仅解析意图，不进决策路径</text>
+          <text x="720" y="146" fill="#8a93a8" font-size="11" text-anchor="end">Chat：离线解析；不进决策路径</text>
           <!-- 底层协议 -->
           <rect x="30" y="282" width="330" height="64" rx="12" fill="#121826" stroke="#1f2739"/>
-          <text x="60" y="310" fill="#e6e9f2" font-size="14" font-weight="600">Kuru OrderBook（Monad 主网 143）</text>
+          <text x="60" y="310" fill="#e6e9f2" font-size="14" font-weight="600">Kuru OrderBook（已验证：Monad 测试网）</text>
           <text x="60" y="331" fill="#8a93a8" font-size="12">全链上订单簿 · 官方 SDK · GTC/IOC</text>
           <rect x="400" y="282" width="330" height="64" rx="12" fill="#121826" stroke="#1f2739"/>
-          <text x="430" y="310" fill="#e6e9f2" font-size="14" font-weight="600">Perpl Perps（Monad 主网）</text>
-          <text x="430" y="331" fill="#8a93a8" font-size="12">永续 · WS 下单协议 · Ed25519 API Key</text>
+          <text x="430" y="310" fill="#e6e9f2" font-size="14" font-weight="600">Perpl 适配器（尚未直播成交）</text>
+          <text x="430" y="331" fill="#8a93a8" font-size="12">REST + WS 已写 · PERPL_ENABLED 默认关</text>
           <line x1="195" y1="222" x2="195" y2="280" stroke="#4f8cff" marker-end="url(#arr)"/>
           <line x1="565" y1="222" x2="565" y2="280" stroke="#4f8cff" marker-end="url(#arr)"/>
           <!-- 前端连线 -->
@@ -240,7 +240,7 @@
       <p class="sec-sub">评审要求验证 6 周内的新开发工作——我们提供双证据链：commit 历史 + 链上交易时间戳。</p>
       <div class="grid3">
         <div class="card"><div class="ico">📦</div><h3>Monorepo</h3>
-          <p>apps/agent（Fastify+WS）· apps/web（Next.js PWA）· packages/shared（共享类型）· ml/（PyTorch）</p></div>
+          <p>apps/agent（Fastify+WS）· apps/web（Next.js 五屏）· packages/shared（共享类型）· ml/（PyTorch）</p></div>
         <div class="card"><div class="ico">🧪</div><h3>CI + 单元测试</h3>
           <p>GitHub Actions：typecheck + 风控/策略/R5 滑点下限测试，每次 push 自动运行。</p></div>
         <div class="card"><div class="ico">🐳</div><h3>一键复现</h3>
