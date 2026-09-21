@@ -1,13 +1,13 @@
 # Round-1 粘贴稿（2026-09-22 通道开放当天用）
 
 > 状态：**尚未提交**。本页只是把表单字段准备好。9/21 写就，9/22 打开 https://hackathon.monad.xyz/ 后人工粘贴。
-> 体验链接只用 GitHub Pages，禁止 localhost / ngrok / cloudflared。
+> 体验链接填魔搭 App HTTPS，禁止 localhost / ngrok / cloudflared。GitHub Pages 只作项目介绍页。
 > 英文进表单；中文是操作备注。
 
 ## 操作顺序（9/22）
 
 1. 打开报名平台，确认 Track 01。
-2. 体验 / Demo / Homepage 三处都填：`https://yigenfeng0707-netizen.github.io/metrix-ai/`
+2. Live demo / 体验填：`https://gsym236998-metrix-ai.ms.show` ；Homepage 可填 Pages 介绍页。
 3. GitHub：`https://github.com/yigenfeng0707-netizen/metrix-ai`
 4. 长描述粘贴下面英文块。
 5. 各 Bounty 勾选后粘贴对应段落（Perpl 段落已去掉 Kuru 哈希冒充）。
@@ -17,7 +17,8 @@
 
 | 字段 | 粘贴值 |
 |---|---|
-| Project homepage / Live demo | https://yigenfeng0707-netizen.github.io/metrix-ai/ |
+| Live demo / App | https://gsym236998-metrix-ai.ms.show |
+| Project homepage | https://yigenfeng0707-netizen.github.io/metrix-ai/ |
 | GitHub | https://github.com/yigenfeng0707-netizen/metrix-ai |
 | User guide | https://github.com/yigenfeng0707-netizen/metrix-ai/blob/main/docs/user-manual.md |
 | Test accounts | https://github.com/yigenfeng0707-netizen/metrix-ai/blob/main/docs/test-accounts.md |
@@ -54,7 +55,7 @@ HONEST SCOPE (round 1, 2026-09-22)
 - Verified live: Kuru testnet margin deposit and IOC margin sell (links below).
 - Coded, not live-verified: Perpl REST/WS adapter (PERPL_ENABLED defaults false).
 - Chat: offline regex parser + confirmation card. No production LLM key is wired.
-- Public URL this round: GitHub Pages homepage. Full Next.js + Agent stack still runs via Docker / npm locally until we attach a stable HTTPS host (see docs/deploy-https.md).
+- Public App URL: https://gsym236998-metrix-ai.ms.show (ModelScope Docker Studio, Running). GitHub Pages is the project intro page, not the live agent UI.
 
 RISK ENGINE
 R1 per-order cap ≤ 5% of equity · R2 per-market exposure ≤ 30% · R3 daily-loss halt at -3% · R4 max-drawdown kill-switch at -10% · R5 Kuru IOC minAmountOut from CostEstimator × (1 − 50 bps) · R6 idempotency + per-market rate limiting. UI can tighten caps, never loosen them.
@@ -104,7 +105,7 @@ A venue-agnostic IntentOrder executor (sim / kuru / perpl adapters) signs only a
 ## Bounty 4.5 Agora mobile
 
 ```
-Five-screen Next.js mobile shell + Mera passkey module (apps/web/lib/mera.ts) with AUSD/MON balance and a funding path to the agent vault. Public HTTPS surface for round 1 is GitHub Pages (passkey rpId binds to hostname). On-chain proof remains Kuru testnet, not Perpl. PWA manifest is not shipped yet.
+Five-screen Next.js mobile shell + Mera passkey module (apps/web/lib/mera.ts) with AUSD/MON balance and a funding path to the agent vault. Public HTTPS App is https://gsym236998-metrix-ai.ms.show (passkey rpId binds to that hostname). GitHub Pages remains the intro page. On-chain proof remains Kuru testnet, not Perpl. PWA manifest is not shipped yet.
 ```
 
 ## 本地复现（不要填进「体验链接」）

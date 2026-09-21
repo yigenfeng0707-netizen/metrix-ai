@@ -28,7 +28,7 @@ Metrix AI is an autonomous trading agent on Monad. Spot routes through Kuru's on
 | GitHub repo | https://github.com/yigenfeng0707-netizen/metrix-ai |
 | Project homepage | https://yigenfeng0707-netizen.github.io/metrix-ai/ |
 | Demo video | （10/9-11 拍摄后填 B 站/YouTube 链接） |
-| Live app / Demo | https://yigenfeng0707-netizen.github.io/metrix-ai/ |
+| Live app / Demo | https://gsym236998-metrix-ai.ms.show |
 
 ---
 
@@ -133,12 +133,12 @@ https://testnet.monadscan.com/tx/0x0b1b77cca2023b9676ec62be5ecd7ebcf0763b02d2b86
 Metrix AI is a mobile-first Next.js shell (five screens: vault, live decision stream, portfolio, chat commands, strategy settings) with Mera passkey auth and AUSD/MON balance + funding toward the agent vault.
 
 Honest status as of 2026-09-21:
-- Mera passkey register/login and AUSD balance read are implemented in apps/web/lib/mera.ts (needs HTTPS + matching rpId; GitHub Pages hostname is the round-1 public surface).
+- Mera passkey register/login and AUSD balance read are implemented in apps/web/lib/mera.ts (needs HTTPS + matching rpId; live App hostname is gsym236998-metrix-ai.ms.show).
 - Verified on-chain activity is Kuru testnet (deposit 0xe15c8218… / IOC 0x0b1b77cc…), not Perpl.
 - Perpl live fills and a packaged PWA (manifest / service worker) are still in progress. Do not claim the Kuru IOC hash as a Perpl trade.
 ```
 
-> 自用备注：Mera D1–D3 代码已进仓；评审公网目前是 GitHub Pages 静态主页，完整 App（Next+Agent）尚未部署稳定 HTTPS。Agora 全 spec 仍缺 Perpl 真成交 + 可安装 PWA。
+> 自用备注：Mera D1–D3 代码已进仓；评审可点 App 为魔搭 Docker 创空间 https://gsym236998-metrix-ai.ms.show（Running）。Pages 只作介绍页。Agora 全 spec 仍缺 Perpl 真成交 + 可安装 PWA。
 
 ### 4.6 Best Community Team Project — $5,000（Monad Foundation · All tracks）
 
@@ -183,4 +183,4 @@ We also participate in the community loop: Monad Developers Discord, and we shar
 | 网格策略在单边行情会亏吧？ | 会，这正是趋势过滤（EMA 休眠）+R4 回撤强平存在的原因 |
 | Agent 钱包安全吗？ | 专用热钱包只放演示小额；六条硬规则服务端强制；恢复路径：R4 自动全平 |
 | 和只调 GPT-4 写交易代码有什么区别？ | 每笔交易有完整审计链：信号快照、规则命中、风控裁决、tx hash，全部可回放；黑箱不可审计 |
-| 后续计划？ | 公网 HTTPS 部署 Next+Agent、Perpl 真成交验证、可安装 PWA、Demo 视频 |
+| 后续计划？ | Perpl 真成交验证、可安装 PWA、Demo 视频 |

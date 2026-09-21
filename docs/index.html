@@ -89,8 +89,8 @@
       三套确定性策略 + 六条硬风控 + LLM 意图解析，每一笔决策都可审计、可回放、链上可验证。</p>
     <p class="sub-en">"The agent that doesn't just chat — it trades." — built on Monad, verifiable on-chain.</p>
     <div class="cta">
-      <a class="btn primary" href="https://github.com/yigenfeng0707-netizen/metrix-ai">GitHub 仓库 ↗</a>
-      <a class="btn ghost" href="#demo">观看 Demo</a>
+      <a class="btn primary" href="https://gsym236998-metrix-ai.ms.show">打开 App ↗</a>
+      <a class="btn ghost" href="https://github.com/yigenfeng0707-netizen/metrix-ai">GitHub 仓库</a>
       <a class="btn ghost" href="#verify">链上验证</a>
     </div>
   </div>
@@ -226,8 +226,8 @@
               <span class="badge-ok">●</span>&nbsp; Kuru IOC 保证金卖出（不是 Perpl）
               <div class="mono"><a href="https://testnet.monadscan.com/tx/0x0b1b77cca2023b9676ec62be5ecd7ebcf0763b02d2b86c734a8af405931447a7">testnet.monadscan.com/tx/0x0b1b77cc…</a></div></li>
             <li style="padding:8px 0">
-              <span class="badge-ok">●</span>&nbsp; 公网体验（首轮）
-              <div class="mono" id="live-stats">本页 GitHub Pages HTTPS · 完整 App 见仓库 README（勿把 localhost 当评审链接）</div></li>
+              <span class="badge-ok">●</span>&nbsp; 公网 App（魔搭创空间 Running）
+              <div class="mono" id="live-stats"><a href="https://gsym236998-metrix-ai.ms.show">gsym236998-metrix-ai.ms.show</a></div></li>
           </ul>
         </div>
       </div>
@@ -260,15 +260,14 @@
 </footer>
 
 <script>
-// 可选联动：本机跑着 Agent 时展示实时落库统计（失败静默）
 (async () => {
   try {
-    const r = await fetch("http://localhost:8787/vaults/demo/overview");
+    const r = await fetch("https://gsym236998-metrix-ai.ms.show/vaults/demo/overview");
     const d = await r.json();
     const el = document.getElementById("live-stats");
-    const el = document.getElementById("live-stats");
-    el.innerHTML = `本机 Agent 在线（开发者）：净值 $${d.equity.toFixed(2)} · 决策 ${d.stats.totalDecisions} 笔。评审请用本页 HTTPS，勿填 localhost。`;
-  } catch { /* 静态占位保留 */ }
+    if (!el || !d || typeof d.equity !== "number") return;
+    el.innerHTML = `<a href="https://gsym236998-metrix-ai.ms.show">gsym236998-metrix-ai.ms.show</a> · sim 净值 $${d.equity.toFixed(2)} · 决策 ${d.stats.totalDecisions} 笔`;
+  } catch { /* 静态链接仍可点 */ }
 })();
 </script>
 </body>

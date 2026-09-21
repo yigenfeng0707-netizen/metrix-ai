@@ -3,6 +3,17 @@ name: Deploy to ModelScope Studio
 on:
   push:
     branches: [main]
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "Dockerfile"
+      - "entrypoint.sh"
+      - "studio-proxy.mjs"
+      - "ms_deploy/**"
+      - ".github/workflows/deploy-modelscope.yml"
+      - "package.json"
+      - "package-lock.json"
+      - "deploy_version.txt"
   workflow_dispatch:
 
 concurrency:

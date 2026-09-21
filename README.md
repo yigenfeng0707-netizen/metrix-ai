@@ -4,10 +4,14 @@
 > 现货执行走 Kuru 全链上订单簿，永续走 Perpl，移动端优先，全程链上可验证。
 
 [![CI](https://github.com/yigenfeng0707-netizen/metrix-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/yigenfeng0707-netizen/metrix-ai/actions/workflows/ci.yml)
-[![Homepage](https://img.shields.io/badge/homepage-metrix--ai-blue)](https://yigenfeng0707-netizen.github.io/metrix-ai/)
+[![App](https://img.shields.io/badge/app-ms.show-green)](https://gsym236998-metrix-ai.ms.show)
+[![Homepage](https://img.shields.io/badge/intro-GitHub%20Pages-blue)](https://yigenfeng0707-netizen.github.io/metrix-ai/)
 
-**评审体验链接（HTTPS）：** https://yigenfeng0707-netizen.github.io/metrix-ai/  
-完整五屏 App 仍需本地或 Docker；部署说明见 `docs/deploy-https.md`。不要把 localhost 填进报名表。
+**评审体验链接（HTTPS App）：** https://gsym236998-metrix-ai.ms.show  
+项目介绍页：https://yigenfeng0707-netizen.github.io/metrix-ai/  
+创空间：https://www.modelscope.cn/studios/gsym236998/metrix-ai  
+
+不要把 localhost 填进报名表。部署与保活见 `docs/deploy-https.md`。
 
 链上验证（Monad 测试网，**Kuru**）：
 - 充值 https://testnet.monadscan.com/tx/0xe15c8218a6a64ae054b2cfb475cd7da15b86ebca9c23b007bb55ba3b241abb55

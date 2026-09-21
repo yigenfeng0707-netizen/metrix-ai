@@ -1,35 +1,40 @@
-# 完整 App 的稳定 HTTPS 部署（尚未上线）
+# 完整 App 的稳定 HTTPS 部署（魔搭创空间 Docker）
 
-**9/22 评审体验链接用 GitHub Pages，不要等这条文档完成才填表。**
+**评审体验链接（可点的 App）：** https://gsym236998-metrix-ai.ms.show  
+创空间页：https://www.modelscope.cn/studios/gsym236998/metrix-ai  
+项目介绍页（GitHub Pages）：https://yigenfeng0707-netizen.github.io/metrix-ai/
 
-主页（已上线）：https://yigenfeng0707-netizen.github.io/metrix-ai/  
-完整栈：Next.js (`apps/web`) + 常驻 Agent (`apps/agent`，REST + WebSocket + 可选下单循环)。Agent **不适合** Vercel Serverless。
+核验（2026-09-21，浏览器 UA）：
 
-## 本机实测（2026-09-21）
-
-| 工具 | 状态 |
+| 路径 | 结果 |
 |---|---|
-| GitHub Pages | 已开通，`main:/docs`，HTTPS 强制 |
-| `vercel` CLI | 已安装，**token 无效**，需要你本机执行 `vercel login` |
-| `railway` CLI | 已安装，**未登录**（`railway whoami` 失败） |
-| Fly.io CLI | 未安装 |
-| 仓库内 | 无 `vercel.json` / `railway.toml` / `fly.toml` |
+| `/` | HTTP 200，Next.js 五屏壳 |
+| `/healthz` | HTTP 200，`ok:true` `mode:sim`，`version` = 部署 SHA |
+| `/vaults/demo/overview` | HTTP 200，Agent 金库 JSON |
+| `/trade` `/chat` `/settings` | HTTP 200 |
 
-因此这次没有把 Next+Agent 推到公网。禁止用 ngrok / cloudflared 当评审 URL。
+创空间 OpenAPI `status=Running`，`sdk_type=docker`，`visibility=public`，`hardware=platform/2v-cpu-8g-mem`。无痕窗口可开主路径。不要填 localhost / ngrok / cloudflared。
 
-## 最短路径（Railway 跑 Docker Compose）
+## 架构（为什么是 Docker 而不是静态 Pages）
 
-1. 浏览器打开 https://railway.app 注册（GitHub 登录即可）。
-2. 本机：`railway login`，然后在仓库根 `metrix-ai/`：`railway init` → `railway up`。
-3. 用 Railway Variables 填（**不要 commit**）：
-   - `AGENT_MODE=sim`（评审只看 UI 时保持 sim）
-   - `NEXT_PUBLIC_AGENT_URL=https://<agent 服务公网域名>`
-   - 若要 testnet：`KURU_RPC_URL` / `KURU_PRIVATE_KEY` 等，只放平台密钥库。
-4. Web 与 Agent 分成两个服务时，Web 的 `NEXT_PUBLIC_AGENT_URL` 必须是 Agent 的 HTTPS 源，并给 Agent 开 CORS（已在 `apps/agent/src/api/server.ts`）。
-5. 无痕窗口走一遍 Home → Trade → Chat。通过后把该 HTTPS 域名回填报名表（替换 Pages 仅当主路径可演示）。
+Next.js（对外 `0.0.0.0:7860`）+ 常驻 Fastify Agent（容器内 `127.0.0.1:8787`）+ `studio-proxy.mjs` 同源转发 `/vaults` `/ws` `/healthz`。Agent 主循环不能塞进 GitHub Pages。
 
-## 不要做
+GitHub **push 不等于** 创空间自动更新。`.github/workflows/deploy-modelscope.yml` 会把 GitHub 树同步进创空间自有 Git（`master`，禁止 force push），再 `POST /studios/{owner}/{name}/deploy`，轮询到 Running。
 
-- 不要把 `.env` 推进 GitHub。
-- 不要把临时 tunnel 填进 Metropolis 表单。
-- 不要在 Vercel 上跑 Agent 主循环（无长驻进程，WS 与下单循环会掉）。
+保活：`.github/workflows/modelscope-keepalive.yml`，公开仓 `cron: '*/5'`，带 Chrome UA ping `/healthz`（默认 curl UA 会被网关 403）。
+
+## 本机不要做的事
+
+- 不要再走 `vercel login` / `railway login` 当评审主机。
+- 不要把 `.env`、私钥、真实密码推进 GitHub 或创空间 Git。
+- 不要改 git config、不要 force push。
+
+## 开发者本地复现（不是评审 URL）
+
+```bash
+npm install
+npm run dev:agent    # 本机 Agent
+npm run dev:web      # 本机 Next
+```
+
+或 `docker compose up -d --build`。

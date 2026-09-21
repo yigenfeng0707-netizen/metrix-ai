@@ -1,19 +1,20 @@
 # Metrix AI 用户手册（评审 / 复现）
 
-公开入口：https://yigenfeng0707-netizen.github.io/metrix-ai/  
+可点 App：https://gsym236998-metrix-ai.ms.show  
+项目介绍页：https://yigenfeng0707-netizen.github.io/metrix-ai/  
 仓库：https://github.com/yigenfeng0707-netizen/metrix-ai  
 测试账号：见 [test-accounts.md](./test-accounts.md)（密码占位符，不要把真实密码写进 git）
 
 ## 1. 现在评审能打开什么
 
-- **公网 HTTPS（9/22 首轮）**：上面的项目主页（GitHub Pages）。含架构说明与两条已验证的 Kuru 测试网交易。
-- **完整五屏 App**（金库 / 决策流 / 持仓 / 指令 / 设置）：需要本机或 Docker 跑 Agent + Next。还没有单独的稳定公网 App 域名。步骤见 [deploy-https.md](./deploy-https.md)。
+- **公网 HTTPS App（优先填表）**：上面的魔搭创空间地址。无痕可开 Home / Trade / Chat / Settings；Agent 为 sim 模式。
+- **项目介绍页**：GitHub Pages，含架构说明与两条已验证的 Kuru 测试网交易。
 
 请勿把 `http://localhost:3000` 填进报名表。
 
 ## 2. 本地打开完整 App（sim 模式，无需链上密钥）
 
-需要 Node 20+。
+这是开发者复现路径，不是评审 URL。需要 Node 20+。
 
 ```bash
 git clone https://github.com/yigenfeng0707-netizen/metrix-ai
@@ -46,7 +47,7 @@ Docker 全栈：`docker compose up -d --build`（默认仍是 sim）。
 |---|---|
 | 主页「Demo 视频」是占位 | 拍摄窗口 10/9–11，尚未录 |
 | Chat 只认少量中英句子 | 当前是正则兜底，不是在线大模型 |
-| Settings 里 Mera 失败 | localhost 或浏览器无 PRF；换 GitHub Pages 域名或 Chrome + 密码管理器 |
+| Settings 里 Mera 失败 | 需在 App 域名 HTTPS 下用支持 PRF 的浏览器；rpId 绑定 `gsym236998-metrix-ai.ms.show` |
 | 想看真实下单 | 配置 `apps/agent/.env` 后 `AGENT_MODE=testnet`；私钥只放本机 |
 
 ## 5. 不要做的事
