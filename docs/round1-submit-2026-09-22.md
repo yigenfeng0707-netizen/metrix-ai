@@ -23,7 +23,7 @@
 | GitHub | https://github.com/yigenfeng0707-netizen/metrix-ai |
 | User guide | https://github.com/yigenfeng0707-netizen/metrix-ai/blob/main/docs/user-manual.md |
 | Test accounts | https://github.com/yigenfeng0707-netizen/metrix-ai/blob/main/docs/test-accounts.md |
-| Demo video | （未拍，10/9–11；此栏留空或写 Coming 10/11） |
+| Demo video | https://raw.githubusercontent.com/yigenfeng0707-netizen/metrix-ai/main/docs/metrix-ai-demo-round1.mp4 （也可再传 B 站/YouTube） |
 
 ## Project name
 
