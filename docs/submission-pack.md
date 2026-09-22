@@ -84,7 +84,7 @@ What we built on top of Kuru:
 - A consumer-grade mobile-first five-screen web app (PWA manifest / service worker not shipped): users see a simple vault balance, a live "decision stream" written in plain language, and one-tap actions — the CLOB complexity is hidden behind risk-managed strategies.
 - Verified end-to-end on Monad testnet: margin deposit https://testnet.monadscan.com/tx/0xe15c8218a6a64ae054b2cfb475cd7da15b86ebca9c23b007bb55ba3b241abb55 and IOC margin sell https://testnet.monadscan.com/tx/0x0b1b77cca2023b9676ec62be5ecd7ebcf0763b02d2b86c734a8af405931447a7 (orderbook 0xa241896A7Dbe8a550D2E5fF7A914bB1989ceD2D9).
 
-Consumer angle: the user never touches an order ticket. They set a risk profile in plain language; our strategies (grid + mean-reversion + ML signal) generate the orders, our risk engine gates them, and Kuru's CLOB executes them — with every fill linked from the UI.
+Consumer angle: the user never touches an order ticket. Risk profile and strategies generate orders; RiskGate gates them; Kuru executes. The public App Home and Trade screens link the two verified testnet txs above; simulation fills in the live stream are labeled separately.
 ```
 
 ### 4.2 Best use of Perpl's API — $5,000（Perpl · All tracks）
@@ -92,12 +92,12 @@ Consumer angle: the user never touches an order ticket. They set a risk profile 
 ```
 Metrix AI includes a Perpl adapter so the same agent loop can route perpetual intents through Perpl's documented REST + trading WebSocket (mt:29 auth, mt:22 orders, mt:24 fills).
 
-Honest status as of 2026-09-21:
+Honest status:
 - Code: apps/agent/src/execution/perpl-adapter.ts and apps/agent/src/market/perpl-rest.ts implement the protocol (Ed25519 sign-in, IOC flags, reconnect backoff).
 - Runtime: PERPL_ENABLED defaults to false. We have NOT submitted a live Perpl order and have NO Perpl fill hash to show.
 - Do not treat Kuru tx 0x0b1b77cc… as Perpl evidence — that hash is a Kuru orderbook IOC margin sell on Monad testnet.
 
-Why it still belongs on this bounty: the adapter is venue-shaped (IntentOrder in, signed WS frame out) and sits behind the same RiskGate as Kuru. Live Perpl verification is the next milestone before final submission (feature freeze 10/5).
+Organizers accepted simulation for the demo path. The public app stays labeled Simulation for Perpl; we are not buying AUSD only to manufacture a bounty fill. The adapter remains venue-shaped (IntentOrder in, signed WS frame out) behind the same RiskGate as Kuru.
 ```
 
 ### 4.3 Best Analytics / Risk Tool — $3,000（Perpl · Track 01）
@@ -110,7 +110,7 @@ R1 per-order notional ≤ 5% of live equity; R2 per-market exposure ≤ 30%; R3 
 
 The engine is fully observable: every verdict (pass or reject, with the exact rule and numbers) is written to a decision feed the user sees in real time on mobile, and persisted to PostgreSQL for post-hoc audit. Risk caps are hard-coded server-side; the product UI can tighten them but cannot loosen them beyond the ceiling — a deliberate design choice for user trust.
 
-Observability today: every RiskGate verdict is pushed over WebSocket to the Trade screen and persisted to PostgreSQL when DATABASE_URL is set. Demo video (R3 halt close-up) is scheduled 10/9–10/11 — not recorded yet.
+Observability today: every RiskGate verdict is pushed over WebSocket to the Trade screen and persisted to PostgreSQL when DATABASE_URL is set. Chat (ModelScope Qwen) can only tighten risk after a confirmation card. Demo cut: docs/metrix-ai-demo-round1.mp4 (Simulation + risk path; not a Perpl fill). Home/Trade also link the two verified Kuru testnet txs.
 ```
 
 ### 4.4 Best Agent Wallet Plugin — $2,500（MetaMask · Track 01）

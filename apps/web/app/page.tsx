@@ -7,6 +7,7 @@ import { getOverview, fmtUsd, type Overview } from "@/lib/api";
 import { useAgentStream } from "@/lib/useAgentStream";
 import Sparkline from "@/components/Sparkline";
 import ModeBanner from "@/components/ModeBanner";
+import KuruEvidence from "@/components/KuruEvidence";
 
 export default function HomePage() {
   const [data, setData] = useState<Overview | null>(null);
@@ -93,6 +94,9 @@ export default function HomePage() {
           )}
         </span>
       </div>
+
+      <h2>链上证据</h2>
+      <KuruEvidence />
 
       <h2>快捷操作</h2>
       <div className="grid2">

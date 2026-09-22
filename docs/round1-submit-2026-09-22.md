@@ -53,9 +53,9 @@ SOLUTION
 Metrix AI manages a vault and executes spot through Kuru's fully-onchain CLOB on Monad. Every decision is a feed: signal snapshot → rule triggered → risk verdict → on-chain tx (when the venue is live).
 
 HONEST SCOPE (round 1, 2026-09-22)
-- Verified live: Kuru testnet margin deposit and IOC margin sell (links below).
-- Coded, not live-verified: Perpl REST/WS adapter (PERPL_ENABLED defaults false).
-- Chat: ModelScope Qwen (`Qwen/Qwen3.5-35B-A3B`) returns a structured command, then a confirmation card and RiskGate. The model cannot sign or loosen risk. If the studio has no token, the same screen says the local rules were used.
+- Verified live: Kuru testnet margin deposit and IOC margin sell (linked from App Home/Trade and below).
+- Coded, demo via labeled Simulation: Perpl path (organizers accepted simulation; PERPL_ENABLED defaults false).
+- Chat: ModelScope Qwen returns a structured command, then confirmation + RiskGate. The model cannot sign or loosen caps.
 - Public App URL: https://gsym236998-metrix-ai.ms.show (ModelScope Docker Studio, Running). GitHub Pages is the project intro page, not the live agent UI.
 
 RISK ENGINE
@@ -74,11 +74,11 @@ Solo builder (fengyigen).
 ```
 Metrix AI routes spot through Kuru's onchain order book using @kuru-labs/kuru-sdk (market params, GTC post-only, IOC isMargin, margin deposit).
 
-Verified Monad testnet:
+Verified Monad testnet (also linked from the public App Home and Trade screens):
 https://testnet.monadscan.com/tx/0xe15c8218a6a64ae054b2cfb475cd7da15b86ebca9c23b007bb55ba3b241abb55 (margin deposit)
 https://testnet.monadscan.com/tx/0x0b1b77cca2023b9676ec62be5ecd7ebcf0763b02d2b86c734a8af405931447a7 (IOC margin sell, orderbook 0xa241896A7Dbe8a550D2E5fF7A914bB1989ceD2D9)
 
-Consumer UI: five mobile-first screens; the user never fills an order ticket. Strategies + RiskGate produce Intents; Kuru executes.
+Consumer UI: five-screen mobile shell. Home and Trade link the two verified Kuru testnet txs above. Chat uses ModelScope Qwen for structured commands behind a confirmation card; RiskGate still gates every write.
 ```
 
 ## Bounty 4.2 Perpl API（诚实版，无 Kuru 哈希）
@@ -86,15 +86,15 @@ Consumer UI: five mobile-first screens; the user never fills an order ticket. St
 ```
 Metrix AI has a Perpl adapter (apps/agent/src/execution/perpl-adapter.ts, perpl-rest.ts) matching Perpl's REST + trading WebSocket (mt:29 / mt:22 / mt:24).
 
-As of 2026-09-21 we have not placed a live Perpl order and have no Perpl fill hash. PERPL_ENABLED defaults to false. Kuru tx 0x0b1b77cc is NOT Perpl evidence.
+We have not placed a live Perpl order and have no Perpl fill hash. PERPL_ENABLED defaults to false. Kuru tx 0x0b1b77cc is NOT Perpl evidence.
 
-Live Perpl verification is scheduled before the 10/5 feature freeze.
+Organizers accepted simulation for the demo path. The public app stays labeled Simulation for Perpl; we are not buying AUSD only to manufacture a bounty fill.
 ```
 
 ## Bounty 4.3 Risk tool
 
 ```
-RiskGate evaluates every IntentOrder before signing: R1–R6 as listed in the long description. Verdicts stream to the Trade screen over WebSocket and persist to PostgreSQL when DATABASE_URL is set. Caps are server-side; the UI cannot raise them. Demo video of an R3 halt is not recorded yet (window 10/9–11).
+RiskGate evaluates every IntentOrder before signing: R1–R6 as listed in the long description. Verdicts stream to the Trade screen over WebSocket and persist to PostgreSQL when DATABASE_URL is set. Caps are server-side; the UI cannot raise them. Chat (ModelScope Qwen) can only tighten risk after a confirmation card. Demo cut: docs/metrix-ai-demo-round1.mp4 (shows Simulation + risk path; not a Perpl fill).
 ```
 
 ## Bounty 4.4 Agent wallet
