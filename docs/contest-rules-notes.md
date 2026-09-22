@@ -31,7 +31,8 @@
 ## 今天刻意没上的工程
 
 - **PWA**：要改 `apps/web`（manifest + 图标；SW 还会碰到 `/ws`、`/healthz` 代理）。会触发魔搭 Docker 全量重建（约 40 分钟）。半套 SW 有缓存旧包风险。9/21 不上线。
-- **Perpl 真成交 / 主网 / 生产 LLM**：缺账户、密钥或资金，不硬做。
+- **Perpl**：主办方允许模拟。适配器在仓库里，公开演示标明 Simulation，不把「没买 AUSD」写成缺项。
+- **Chat**：走魔搭 API-Inference（默认 `Qwen/Qwen3.5-35B-A3B`）。Token 放本机 `.env` 或创空间 Secrets（`LLM_API_KEY` / `MODELSCOPE_API_KEY`），没有 Token 时界面写明仍是规则解析。
 - **最终 Submit / bounty 说明**：2026-09-22 后台仍写 *complete those fields when you submit*；窗口 **2 Oct–14 Oct**。
 
 详细调研：工作区根目录 `Monad-Metropolis-线上参赛分析报告.md`。

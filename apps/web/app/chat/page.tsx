@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { confirmCommand, postCommand } from "@/lib/api";
+import { useEffect, useState } from "react";
+import { confirmCommand, getOverview, postCommand, type Overview } from "@/lib/api";
 
 interface Pending {
   id: string;
@@ -17,6 +17,13 @@ export default function ChatPage() {
   const [pending, setPending] = useState<Pending | null>(null);
   const [log, setLog] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [llm, setLlm] = useState<Overview["llm"]>();
+
+  useEffect(() => {
+    getOverview()
+      .then((o) => setLlm(o.llm))
+      .catch(() => setLlm(undefined));
+  }, []);
 
   async function submit(t: string) {
     if (!t.trim() || busy) return;
@@ -24,10 +31,17 @@ export default function ChatPage() {
     try {
       const r = await postCommand(t);
       if (r.parsed.requiresConfirmation) {
-        setPending({ id: r.id, action: r.parsed.action, note: r.parsed.note, requiresConfirmation: true });
+        setPending({
+          id: r.id,
+          action: r.parsed.action,
+          note: r.parsed.note,
+          requiresConfirmation: true,
+        });
       }
       setLog((l) => [`🧑 ${t}`, `🤖 ${r.parsed.note}`, ...l]);
       setText("");
+    } catch (e) {
+      setLog((l) => [`⚠ ${e instanceof Error ? e.message : String(e)}`, ...l]);
     } finally {
       setBusy(false);
     }
@@ -38,8 +52,19 @@ export default function ChatPage() {
     setBusy(true);
     try {
       const r = await confirmCommand(pending.id);
-      setLog((l) => [`🤖 ✅ 已执行：${r.applied?.note ?? pending.note}`, ...l]);
+      const result = r.result;
+      const note = result?.note ?? r.applied?.note ?? pending.note;
+      if (result?.status === "rejected" || r.status === "rejected") {
+        setLog((l) => [`🤖 ⚠ 暂未生效：${note}`, ...l]);
+      } else if (result?.status === "partial") {
+        const skipped = result.skipped.map((s) => s.reason).join("；");
+        setLog((l) => [`🤖 ⚠ 部分生效：${note}${skipped ? `（${skipped}）` : ""}`, ...l]);
+      } else {
+        setLog((l) => [`🤖 ✅ 已执行：${note}`, ...l]);
+      }
       setPending(null);
+    } catch (e) {
+      setLog((l) => [`⚠ ${e instanceof Error ? e.message : String(e)}`, ...l]);
     } finally {
       setBusy(false);
     }
@@ -48,7 +73,11 @@ export default function ChatPage() {
   return (
     <>
       <h1>指令 Agent</h1>
-      <p className="subtitle">自然语言 → 结构化参数 → 确认 → 执行（所有写操作需批准）</p>
+      <p className="subtitle">
+        {llm?.production
+          ? `指令交给魔搭 ${llm.model ?? "Qwen"} 解析成结构化参数。模型不能下单：写操作必须批准，风控只能调严。`
+          : "尚未配置魔搭 Token，指令暂用本地规则解析。写操作必须批准；风控只能调严。"}
+      </p>
 
       <div className="card">
         <div style={{ display: "flex", gap: 8 }}>
@@ -78,6 +107,9 @@ export default function ChatPage() {
             <span className="badge info">待确认 · {pending.action}</span>
           </div>
           <p style={{ margin: "8px 0" }}>{pending.note}</p>
+          {pending.action === "set_risk" && (
+            <p className="muted small">批准后只会收紧限额。若请求比当前更松，界面会标明「暂未生效」，不会假确认。</p>
+          )}
           <div style={{ display: "flex", gap: 8 }}>
             <button className="btn" onClick={confirm} disabled={busy}>批准执行</button>
             <button className="btn ghost" onClick={() => setPending(null)}>取消</button>

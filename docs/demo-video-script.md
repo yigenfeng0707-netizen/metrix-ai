@@ -1,8 +1,9 @@
 # Metrix AI Demo 视频拍摄脚本（可拍版）
 
-> 成片**还不存在**。本页把镜头收到「对着公网 sim App + 已有 Kuru 测试网 tx」就能拍，不要求出镜/配音。
+> 短版成片已在本地：`docs/metrix-ai-demo-round1.mp4`（2026-09-22，约 60s，1080p30）。公开播放链接还没有。
 > 窗口：9/22 可拍 **60–90 秒无旁白字幕版**（给首轮 Submit 备用）；10/9–11 再拍 ≤3 分钟完整版。
-> 公网画面只用：https://gsym236998-metrix-ai.ms.show （无痕即可）。不要录 localhost。
+> **9/22 短版必须录本地已修诚实度的 sim UI**（`AGENT_MODE=sim`，http://127.0.0.1:3000）。禁止录公网 `gsym236998-metrix-ai.ms.show`——那还是旧包，Trade 可能仍有假 hash。
+> 链上证据镜头仍用 MonadScan 测试网两条 **真** Kuru tx（不是 sim 假 hash，也不是 Perpl）。
 
 ---
 
@@ -10,7 +11,7 @@
 
 | # | 准备项 | 验收 |
 |---|---|---|
-| 1 | 无痕打开 App，确认 `/healthz` 为 `ok` 且 `mode` 为 `sim` | 顶栏或接口可见 sim |
+| 1 | 本地 `AGENT_MODE=sim` 打开 http://127.0.0.1:3000，`/healthz` 为 `ok` 且 `mode` 为 `sim` | Trade 有 Simulation 标签，无假 MonadScan 链 |
 | 2 | 五个标签：Home / Trade / Chat / Settings / 两条 MonadScan 测试网 tx | 一键切换 |
 | 3 | 已有链上证据（**Kuru 测试网，不是主网、不是 Perpl**） | 0xe15c8218… 保证金；0x0b1b77cc… IOC 卖出 |
 | 4 | 录屏：1920×1080，浏览器无书签栏；手机可用 Chrome 设备模式 390×844 | 试录 20s 字号可读 |
@@ -25,7 +26,7 @@
 统一字幕脚：「Public demo is sim mode. On-chain proof is Kuru testnet, not Perpl.」片头出现一次即可。
 
 ### S1 ｜ 0:00–0:12 ｜ 打开 App
-- 画面：地址栏完整露出 `gsym236998-metrix-ai.ms.show` → Home 金库净值
+- 画面：本地 Home（sim 金库净值）；片头卡写 SIM MODE + Kuru testnet not Perpl
 - 字幕：Metrix AI — autonomous trading agent on Monad (Track 01)
 
 ### S2 ｜ 0:12–0:40 ｜ Trade 决策流
@@ -40,7 +41,13 @@
 - 画面：GitHub `yigenfeng0707-netizen/metrix-ai` + App URL 各停 3 秒
 - 字幕：Repo public. Perpl adapter coded, not live-filled.
 
-导出：`metrix-ai-demo-round1.mp4`，H.264 1080p，尽量 <50MB。上传 YouTube 未列出或 B 站后再填 Submit 的 Demo 栏；**没片就留空，不要放未完成文件。**
+导出：`docs/metrix-ai-demo-round1.mp4`，H.264 1080p，尽量 <50MB。本地可跑：
+
+```
+python metrix-ai/tools/demo-video/record_round1_silent.py
+```
+
+上传 YouTube 未列出或 B 站后再填 Submit 的 Demo 栏；**没片就留空，不要放未完成文件。**
 
 ---
 
@@ -76,7 +83,7 @@
 - 完整版文件名 `metrix-ai-demo.mp4`
 
 ## 四、交付 Checklist（成片之后再勾）
-- [ ] 短版或完整版 mp4
+- [x] 短版 mp4（`docs/metrix-ai-demo-round1.mp4`，约 60s）
 - [ ] 公开可播链接
 - [ ] 介绍页占位换成 iframe/video
 - [ ] 报名表 Demo 栏填写该链接（9/22 起）

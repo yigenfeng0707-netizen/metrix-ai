@@ -40,7 +40,7 @@ An autonomous AI trading agent on Monad that spots on Kuru — every Kuru fill a
 ## Short description
 
 ```
-Metrix AI is an autonomous trading agent on Monad. Spot routes through Kuru's onchain CLOB; a Perpl adapter exists but is not live-verified. Deterministic strategies sit behind six risk rules. Chat commands use an offline parser (not a live LLM). Verified Kuru testnet txs are linked from the homepage.
+Metrix AI is an autonomous trading agent on Monad. Spot routes through Kuru's onchain CLOB; a Perpl adapter exists but is not live-verified. Deterministic strategies sit behind six risk rules. Chat commands go to a ModelScope Qwen model and return a structured command; without a studio token the UI says it used the local rules. Verified Kuru testnet txs are linked from the homepage. The Perpl demo is simulation, which the organizers accepted.
 ```
 
 ## Long description
@@ -55,7 +55,7 @@ Metrix AI manages a vault and executes spot through Kuru's fully-onchain CLOB on
 HONEST SCOPE (round 1, 2026-09-22)
 - Verified live: Kuru testnet margin deposit and IOC margin sell (links below).
 - Coded, not live-verified: Perpl REST/WS adapter (PERPL_ENABLED defaults false).
-- Chat: offline regex parser + confirmation card. No production LLM key is wired.
+- Chat: ModelScope Qwen (`Qwen/Qwen3.5-35B-A3B`) returns a structured command, then a confirmation card and RiskGate. The model cannot sign or loosen risk. If the studio has no token, the same screen says the local rules were used.
 - Public App URL: https://gsym236998-metrix-ai.ms.show (ModelScope Docker Studio, Running). GitHub Pages is the project intro page, not the live agent UI.
 
 RISK ENGINE

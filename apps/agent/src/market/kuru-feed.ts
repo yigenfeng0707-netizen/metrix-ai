@@ -17,6 +17,7 @@ export function fetchSimBook(): BookSnapshot {
     ts: Date.now(),
     bestBid: Number((simPrice - spread / 2).toFixed(2)),
     bestAsk: Number((simPrice + spread / 2).toFixed(2)),
+    quoteSource: "sim",
   };
 }
 
@@ -25,18 +26,20 @@ export function currentSimPrice(): number {
 }
 
 // ---------- 真实行情（testnet/live 模式） ----------
-// 通过 CostEstimator 的 AMM 报价推导隐含中间价：用固定小额 quote 询价，price = quoteIn / baseOut。
-// W1 已验证：estimateMarketBuy 在 Kuru 测试网真实可用。
+// 优先 Kuru SDK L2（CLOB 档位 + AMM vault 合并，官方 getL2OrderBook）。
+// L2 为空或解析失败时，诚实降级为 CostEstimator AMM 隐含价，不假装 CLOB。
 
 let providerCache: ethers.providers.JsonRpcProvider | null = null;
 let mpCache: Awaited<ReturnType<typeof KuruSdk.ParamFetcher.getMarketParams>> | null = null;
+let ammFallbackWarned = false;
 
-function getProvider(): ethers.providers.JsonRpcProvider {
-  if (!providerCache) providerCache = new ethers.providers.JsonRpcProvider(config.rpcUrl);
+function getProvider(rpcUrl = config.rpcUrl): ethers.providers.JsonRpcProvider {
+  if (!rpcUrl) throw new Error("Kuru 行情需要 KURU_RPC_URL");
+  if (!providerCache) providerCache = new ethers.providers.JsonRpcProvider(rpcUrl);
   return providerCache;
 }
 
-export async function fetchTestnetBook(): Promise<BookSnapshot> {
+async function fetchAmmImpliedBook(): Promise<BookSnapshot> {
   const p = getProvider();
   if (!mpCache) {
     mpCache = await KuruSdk.ParamFetcher.getMarketParams(p, config.marketAddress);
@@ -44,24 +47,62 @@ export async function fetchTestnetBook(): Promise<BookSnapshot> {
   const est = await KuruSdk.CostEstimator.estimateMarketBuy(
     p, config.marketAddress, mpCache, config.quotePerTrade,
   );
-  // est.output 已是人类可读数量（CostEstimator 内部做了精度换算）
   const baseOut = Number(est.output);
-  const price = config.quotePerTrade / baseOut; // 1 MTX = ? MON
-  const spread = price * 0.0004; // 0.04% 名义点差
+  if (!(baseOut > 0)) throw new Error("AMM 询价 output 无效");
+  const price = config.quotePerTrade / baseOut;
+  const spread = price * 0.0004;
   return {
-    market: "MTX/MON",
+    market: "MTX/MON · AMM 隐含价（非 CLOB 最优档）",
     ts: Date.now(),
     bestBid: Number((price - spread / 2).toFixed(10)),
     bestAsk: Number((price + spread / 2).toFixed(10)),
+    quoteSource: "kuru_amm",
   };
 }
-// 对照 docs.kuru.io/sdk/orderbook-sdk 校准 L2Book 返回结构后启用。
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
+/**
+ * 用官方 SDK 解析 L2（getL2Book hex + AMM vault）。
+ * 无可用买卖档时抛错，由 fetchTestnetBook 降级 AMM。
+ */
 export async function fetchKuruBook(marketAddress: string, rpcUrl: string): Promise<BookSnapshot> {
-  // const provider = new ethers.JsonRpcProvider(rpcUrl);
-  // const marketParams = await KuruSdk.ParamFetcher.getMarketParams(provider, marketAddress);
-  // const orderbook = new ethers.Contract(marketAddress, orderbookAbi.abi, provider);
-  // const l2Book = await orderbook.getL2Book();
-  // TODO(W1): 解析 l2Book.bids[0] / l2Book.asks[0] 得到最优买卖价
-  throw new Error("fetchKuruBook: W1 验证后启用（对照 Kuru 官方文档解析 L2Book）");
+  const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
+  const mp = await KuruSdk.ParamFetcher.getMarketParams(provider, marketAddress);
+  const l2 = await KuruSdk.OrderBook.getL2OrderBook(provider, marketAddress, mp);
+  const bids = Array.isArray(l2.bids) ? l2.bids : [];
+  const asks = Array.isArray(l2.asks) ? l2.asks : [];
+  const bidPx = bids.map((lvl) => Number(lvl?.[0])).filter((n) => Number.isFinite(n) && n > 0);
+  const askPx = asks.map((lvl) => Number(lvl?.[0])).filter((n) => Number.isFinite(n) && n > 0);
+  if (!bidPx.length || !askPx.length) {
+    throw new Error("Kuru L2 盘口为空（无 bid/ask）");
+  }
+  const bestBid = Math.max(...bidPx);
+  const bestAsk = Math.min(...askPx);
+  if (!(bestAsk >= bestBid)) {
+    throw new Error("Kuru L2 买卖价交叉或无效");
+  }
+  return {
+    market: "MTX/MON · Kuru L2",
+    ts: Date.now(),
+    bestBid,
+    bestAsk,
+    quoteSource: "kuru_l2",
+  };
+}
+
+export async function fetchTestnetBook(): Promise<BookSnapshot> {
+  if (!config.rpcUrl || !config.marketAddress) {
+    throw new Error("testnet/live 需要 KURU_RPC_URL / KURU_MARKET_ADDRESS");
+  }
+  try {
+    return await fetchKuruBook(config.marketAddress, config.rpcUrl);
+  } catch (err) {
+    if (!ammFallbackWarned) {
+      ammFallbackWarned = true;
+      console.warn(
+        "[kuru-feed] L2 盘口不可用，降级 AMM CostEstimator 隐含价（非 CLOB 最优档）:",
+        (err as Error).message,
+      );
+    }
+    return fetchAmmImpliedBook();
+  }
 }

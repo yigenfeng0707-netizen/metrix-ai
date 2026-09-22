@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import type { AccountState, DecisionEvent, StrategyParams, ParsedCommand } from "@metrix/shared";
+import type { AccountState, DecisionEvent, StrategyParams, ParsedCommand, CommandApplyResult } from "@metrix/shared";
 import { config } from "./config";
 import { persistDecision } from "./db/pg";
 
@@ -7,7 +7,8 @@ export interface StoredCommand {
   id: string;
   text: string;
   parsed: ParsedCommand;
-  status: "pending" | "applied";
+  status: "pending" | "applied" | "rejected";
+  result?: CommandApplyResult;
   ts: number;
 }
 

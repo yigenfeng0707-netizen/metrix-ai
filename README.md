@@ -1,7 +1,9 @@
 # Metrix AI — Monad 自主交易 Agent
 
 > Monad Metropolis 黑客松 · Track 01（链上金融与交易）
-> 现货执行走 Kuru 全链上订单簿，永续走 Perpl，移动端优先，全程链上可验证。
+> 现货走 Kuru（测试网已有成交）。Perpl 用模拟演示（主办方允许）；适配器在仓库里，默认关闭。
+> 公网 Demo 默认 **sim**（模拟成交，不是链上 tx）。Chat 在配置魔搭 Token 后调用 Qwen；没有 Token 时用规则解析，并在界面标明。
+> 前端是五屏 mobile-first Web（**未装 PWA** manifest / Service Worker）。
 
 [![CI](https://github.com/yigenfeng0707-netizen/metrix-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/yigenfeng0707-netizen/metrix-ai/actions/workflows/ci.yml)
 [![App](https://img.shields.io/badge/app-ms.show-green)](https://gsym236998-metrix-ai.ms.show)
@@ -13,7 +15,7 @@
 
 不要把 localhost 填进报名表。部署与保活见 `docs/deploy-https.md`。
 
-链上验证（Monad 测试网，**Kuru**）：
+链上验证（Monad 测试网，**Kuru，不是 Perpl**）：
 - 充值 https://testnet.monadscan.com/tx/0xe15c8218a6a64ae054b2cfb475cd7da15b86ebca9c23b007bb55ba3b241abb55
 - IOC 卖出 https://testnet.monadscan.com/tx/0x0b1b77cca2023b9676ec62be5ecd7ebcf0763b02d2b86c734a8af405931447a7
 
@@ -30,6 +32,7 @@ npm run dev:web          # http://localhost:3000
 ```
 
 打开 http://localhost:3000 即可看到：金库总览 → 实时决策流 → 持仓 → 自然语言指令 → 策略设置。
+sim 模式下 Trade 卡片会标明 **Simulation**，不会把假 hash 链到区块浏览器。
 
 ## Docker 全栈一键部署（含 ML 信号服务）
 
@@ -69,7 +72,7 @@ Agent 主循环中作为第三个策略（`ml-signal`）：`p_up ≥ 0.6 → 买
 metrix-ai/
 ├── apps/
 │   ├── agent/        # Agent 后端：主循环 / 策略引擎 / 风控引擎 / 执行路由 / REST+WS
-│   └── web/          # Next.js 前端：5 屏 mobile-first PWA
+│   └── web/          # Next.js 前端：5 屏 mobile-first（未装 PWA）
 └── packages/
     └── shared/       # 共享类型（IntentOrder / DecisionEvent / AccountState ...）
 ```
@@ -88,7 +91,7 @@ metrix-ai/
 | Kuru 适配器 | `src/execution/kuru-adapter.ts` | 官方 SDK（ethers v5）：GTC/IOC 下单、保证金充值 |
 | Perpl 适配器 | `src/execution/perpl-adapter.ts` | 交易 WS（mt:29 认证 / mt:22 下单，Ed25519） |
 | Perpl REST | `src/market/perpl-rest.ts` | 公开行情（context/K线）+ 认证历史查询脚手架 |
-| 意图解析 | `src/llm/intent-parser.ts` | 离线兜底解析；W2/W3 替换为 LLM 结构化输出 |
+| 意图解析 | `src/llm/parse-command.ts` | 魔搭 Qwen；无 Token 时规则解析并标明；写操作需确认卡 |
 | API + WS | `src/api/server.ts` | Fastify REST + WebSocket 实时推送 |
 
 > Perpl 协议参考（已核对官方文档）：REST 仅行情/历史；下单走 `wss://.../ws/v1/trading`，

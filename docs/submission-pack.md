@@ -19,7 +19,7 @@ An autonomous AI trading agent on Monad that spots on Kuru, perps on Perpl — e
 
 ### Short description (~300 chars)
 ```
-Metrix AI is an autonomous trading agent on Monad. Spot routes through Kuru's onchain CLOB; a Perpl adapter exists but is not live-verified. Deterministic strategies sit behind six risk rules. Chat commands use an offline parser (not a live LLM). Verified Kuru testnet txs are linked from the homepage.
+Metrix AI is an autonomous trading agent on Monad. Spot routes through Kuru's onchain CLOB; a Perpl adapter exists but is not live-verified. Deterministic strategies sit behind six risk rules. Chat commands go to ModelScope Qwen when a token is configured; otherwise the UI says local rules were used. Verified Kuru testnet txs are linked from the homepage.
 ```
 
 ### Links
@@ -81,7 +81,7 @@ Metrix AI is a focused spot trading product that routes every trade through Kuru
 
 What we built on top of Kuru:
 - Spot execution layer powered by @kuru-labs/kuru-sdk: market params fetching (price/size precision, tick size), GTC post-only limit orders, IOC market orders with isMargin=true, margin account deposits, and OrderCreated event parsing for order tracking.
-- A consumer-grade mobile-first PWA (not a trading terminal): users see a simple vault balance, a live "decision stream" written in plain language, and one-tap actions — the CLOB complexity is hidden behind risk-managed strategies.
+- A consumer-grade mobile-first five-screen web app (PWA manifest / service worker not shipped): users see a simple vault balance, a live "decision stream" written in plain language, and one-tap actions — the CLOB complexity is hidden behind risk-managed strategies.
 - Verified end-to-end on Monad testnet: margin deposit https://testnet.monadscan.com/tx/0xe15c8218a6a64ae054b2cfb475cd7da15b86ebca9c23b007bb55ba3b241abb55 and IOC margin sell https://testnet.monadscan.com/tx/0x0b1b77cca2023b9676ec62be5ecd7ebcf0763b02d2b86c734a8af405931447a7 (orderbook 0xa241896A7Dbe8a550D2E5fF7A914bB1989ceD2D9).
 
 Consumer angle: the user never touches an order ticket. They set a risk profile in plain language; our strategies (grid + mean-reversion + ML signal) generate the orders, our risk engine gates them, and Kuru's CLOB executes them — with every fill linked from the UI.

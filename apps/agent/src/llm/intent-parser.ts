@@ -3,7 +3,7 @@ import type { ParsedCommand } from "@metrix/shared";
 /**
  * 自然语言 → 结构化指令。
  *
- * 当前为离线兜底解析（保证 Demo 不依赖外部服务）。
+ * 当前为离线兜底解析（保证 Demo 不依赖外部服务，不是生产 LLM）。
  * W2/W3 接入 LLM structured output（JSON Schema 强约束）：
  *  - 任何输出必须再经 RiskGate 复核
  *  - LLM 只能调严风控，不能调松
@@ -12,6 +12,16 @@ import type { ParsedCommand } from "@metrix/shared";
 export function parseIntent(text: string): ParsedCommand {
   const t = text.toLowerCase();
   const pct = text.match(/(\d+(?:\.\d+)?)\s*%/);
+
+  // 风控阈值必须先于「全平」：例如「回撤超过 5% 就全平」是收紧 R4，不是立刻平仓
+  if ((t.includes("回撤") || t.includes("风控") || t.includes("risk")) && pct) {
+    return {
+      action: "set_risk",
+      params: { maxDrawdownPct: -Math.abs(Number(pct[1])) / 100 },
+      requiresConfirmation: true,
+      note: `识别为风控参数更新：最大回撤阈值 ${pct[1]}%（确认后只能调严；若比当前更松将标记为暂未生效）`,
+    };
+  }
 
   if (t.includes("平仓") || t.includes("全平") || t.includes("close")) {
     const isAll = t.includes("全平") || t.includes("全部") || t.includes("close all");
@@ -35,15 +45,6 @@ export function parseIntent(text: string): ParsedCommand {
         note: `识别为网格参数更新：区间 [${nums[0]}, ${nums[1]}]，${Math.round(nums[2])} 格`,
       };
     }
-  }
-
-  if ((t.includes("回撤") || t.includes("风控") || t.includes("risk")) && pct) {
-    return {
-      action: "set_risk",
-      params: { maxDrawdownPct: -Math.abs(Number(pct[1])) / 100 },
-      requiresConfirmation: true,
-      note: `识别为风控参数更新：最大回撤阈值 ${pct[1]}%（只能调严）`,
-    };
   }
 
   return {

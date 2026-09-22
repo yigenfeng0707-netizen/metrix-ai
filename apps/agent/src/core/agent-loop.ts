@@ -111,8 +111,9 @@ export function startAgentLoop(): void {
             ...base,
             status: r.status,
             txHash: r.txHash,
+            executionKind: r.executionKind,
             fillPrice: r.fillPrice,
-            summary: `${intent.side.toUpperCase()} ${intent.size} @ ${r.fillPrice ?? "-"}`,
+            summary: `${r.executionKind === "simulation" ? "[Simulation] " : ""}${intent.side.toUpperCase()} ${intent.size} @ ${r.fillPrice ?? "-"}`,
           });
         } catch (err) {
           store.recordDecision({

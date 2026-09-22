@@ -1,16 +1,8 @@
 import type { IntentOrder } from "@metrix/shared";
 import { store } from "../store";
 
-const HEX = "0123456789abcdef";
-
-function fakeTxHash(): string {
-  let h = "0x";
-  for (let i = 0; i < 64; i++) h += HEX[Math.floor(Math.random() * 16)];
-  return h;
-}
-
-/** 模拟成交：即时按意图价格全额成交，并更新账户状态 */
-export function executeSim(intent: IntentOrder): { txHash: string; fillPrice: string } {
+/** 模拟成交：即时按意图价格全额成交，并更新账户状态。不生成假 0x hash。 */
+export function executeSim(intent: IntentOrder): { fillPrice: string } {
   const price = Number(intent.price ?? 0);
   const size = Number(intent.size);
 
@@ -44,7 +36,7 @@ export function executeSim(intent: IntentOrder): { txHash: string; fillPrice: st
     a.dayPnl += (Math.random() - 0.45) * 4;
   });
 
-  return { txHash: fakeTxHash(), fillPrice: String(price) };
+  return { fillPrice: String(price) };
 }
 
 /** 全部平仓（R4 强平 / 用户指令），并暂停 Agent */

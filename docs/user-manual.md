@@ -27,9 +27,9 @@ npm run dev:web      # http://localhost:3000
 浏览器打开 http://localhost:3000 ：
 
 1. Home：金库净值、今日盈亏、Agent 状态。
-2. Trade：决策流（信号 → 风控 → 成交摘要）。sim 模式每约 3 秒评估一次。
+2. Trade：决策流（信号 → 风控 → 成交摘要）。**sim 卡片标明 Simulation，假 hash 不会跳 MonadScan。** Agent 每约 3 秒评估一次。
 3. Portfolio：持仓；空仓是正常的，等网格/MM 触发。
-4. Chat：试试「回撤超过 5% 就全平」→ 出现确认卡再批准。
+4. Chat：试试「回撤超过 5% 就全平」→ 出现确认卡再批准（只会把 R4 从 -10% 收到 -5%；更松的请求会显示暂未生效）。当前是正则兜底，不是在线大模型。
 5. Settings：网格/均值回归参数；可选 Mera passkey（需 HTTPS + 支持 PRF 的浏览器）。
 
 Docker 全栈：`docker compose up -d --build`（默认仍是 sim）。

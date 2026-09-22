@@ -52,6 +52,7 @@ h2 { font-size: 15px; margin: 20px 0 10px; color: var(--muted); font-weight: 600
 .badge.ok { background: rgba(52, 211, 153, 0.15); color: var(--green); }
 .badge.rej { background: rgba(251, 191, 36, 0.15); color: var(--amber); }
 .badge.info { background: rgba(79, 140, 255, 0.15); color: var(--accent); }
+.badge.sim { background: rgba(251, 191, 36, 0.18); color: var(--amber); }
 
 .btn {
   display: inline-block; border: none; cursor: pointer;
@@ -90,4 +91,7 @@ td { padding: 8px 6px; border-bottom: 1px solid var(--border); font-variant-nume
 .decision-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .decision-time { color: var(--muted); font-size: 11px; margin-left: auto; }
 .decision-line { font-size: 13px; margin: 4px 0; line-height: 1.5; }
-.tx { color: var(--accent); font-size: 12px; }
+.tx { font-size: 12px; display: block; margin-top: 6px; }
+.tx.sim { color: var(--amber); }
+.tx.ack { color: var(--muted); }
+.tx.onchain { color: var(--accent); text-decoration: underline; }

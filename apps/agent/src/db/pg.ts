@@ -10,11 +10,17 @@ import type { DecisionEvent } from "@metrix/shared";
  */
 
 let pool: Pool | null = null;
+let disabled = false;
 
 export function getPool(): Pool | null {
-  if (!process.env.DATABASE_URL) return null;
+  if (disabled || !process.env.DATABASE_URL) return null;
   if (!pool) {
-    pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
+    pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      max: 5,
+      connectionTimeoutMillis: 2000,
+      query_timeout: 3000,
+    });
   }
   return pool;
 }
@@ -74,14 +80,23 @@ CREATE TABLE IF NOT EXISTS risk_events (
 export async function ensureTables(): Promise<boolean> {
   const db = getPool();
   if (!db) return false;
-  await db.query(DDL);
-  await db.query(
-    `INSERT INTO vaults (id, owner_address, agent_address, balances)
-     VALUES ($1, $2, $3, $4)
-     ON CONFLICT (id) DO NOTHING`,
-    [VAULT_ID, "0x-demo-owner", "0x-demo-agent", JSON.stringify({ usdc: 10000 })],
-  );
-  return true;
+  try {
+    await db.query(DDL);
+    await db.query(
+      `INSERT INTO vaults (id, owner_address, agent_address, balances)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (id) DO NOTHING`,
+      [VAULT_ID, "0x-demo-owner", "0x-demo-agent", JSON.stringify({ usdc: 10000 })],
+    );
+    return true;
+  } catch (err) {
+    disabled = true;
+    const stale = pool;
+    pool = null;
+    void stale?.end().catch(() => undefined);
+    console.warn("[db] 连接失败，降级纯内存：", (err as Error).message);
+    return false;
+  }
 }
 
 let warned = false;
@@ -125,15 +140,19 @@ export async function persistDecision(d: DecisionEvent): Promise<void> {
 export async function dbStats(): Promise<{ persisted: boolean; decisions: number; orders: number } | null> {
   const db = getPool();
   if (!db) return null;
-  const r = await db.query<{ decisions: string; orders: string }>(
-    `SELECT
-       (SELECT count(*) FROM decisions WHERE vault_id = $1) AS decisions,
-       (SELECT count(*) FROM orders   WHERE vault_id = $1) AS orders`,
-    [VAULT_ID],
-  );
-  return {
-    persisted: true,
-    decisions: Number(r.rows[0].decisions),
-    orders: Number(r.rows[0].orders),
-  };
+  try {
+    const r = await db.query<{ decisions: string; orders: string }>(
+      `SELECT
+         (SELECT count(*) FROM decisions WHERE vault_id = $1) AS decisions,
+         (SELECT count(*) FROM orders   WHERE vault_id = $1) AS orders`,
+      [VAULT_ID],
+    );
+    return {
+      persisted: true,
+      decisions: Number(r.rows[0].decisions),
+      orders: Number(r.rows[0].orders),
+    };
+  } catch {
+    return null;
+  }
 }

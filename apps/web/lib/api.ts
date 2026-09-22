@@ -1,4 +1,13 @@
-import type { AccountState, DecisionEvent, GridParams, MRParams } from "@metrix/shared";
+import type {
+  AccountState,
+  AgentMode,
+  CommandApplyResult,
+  DecisionEvent,
+  GridParams,
+  MRParams,
+  ParsedCommand,
+  RiskLimits,
+} from "@metrix/shared";
 
 /**
  * 浏览器访问 Agent 的基址。
@@ -25,34 +34,56 @@ export interface Overview {
   perp: { enabled: boolean; side: string };
   stats: { totalDecisions: number };
   db: { persisted: boolean; decisions: number; orders: number } | null;
+  mode?: AgentMode;
+  riskLimits?: RiskLimits;
+  llm?: { production: boolean; parser: string; model?: string | null };
+}
+
+async function readJson<T>(r: Response): Promise<T> {
+  const body = (await r.json().catch(() => ({}))) as T & { error?: string; ok?: boolean };
+  if (!r.ok || (body && typeof body === "object" && typeof body.error === "string" && body.error)) {
+    const msg = typeof body.error === "string" ? body.error : `HTTP ${r.status}`;
+    throw new Error(msg);
+  }
+  return body as T;
 }
 
 export async function getOverview(): Promise<Overview> {
   const r = await fetch(`${AGENT_URL}/vaults/demo/overview`, { cache: "no-store" });
-  return r.json();
+  return readJson<Overview>(r);
 }
 
 export async function getDecisions(limit = 50): Promise<DecisionEvent[]> {
   const r = await fetch(`${AGENT_URL}/vaults/demo/decisions?limit=${limit}`, { cache: "no-store" });
-  return r.json();
+  return readJson<DecisionEvent[]>(r);
 }
 
-export async function postCommand(text: string): Promise<{ id: string; parsed: { action: string; note: string; requiresConfirmation: boolean } }> {
+export async function postCommand(text: string): Promise<{
+  id: string;
+  parsed: ParsedCommand;
+  parser?: string;
+  model?: string | null;
+}> {
   const r = await fetch(`${AGENT_URL}/vaults/demo/command`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text }),
   });
-  return r.json();
+  return readJson(r);
 }
 
-export async function confirmCommand(id: string): Promise<{ id: string; status: string; applied: { note: string } }> {
+export async function confirmCommand(id: string): Promise<{
+  id: string;
+  status: string;
+  applied: ParsedCommand;
+  result?: CommandApplyResult;
+}> {
   const r = await fetch(`${AGENT_URL}/vaults/demo/command/${id}/confirm`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({}),
   });
-  return r.json();
+  return readJson(r);
 }
 
 export async function updateStrategy(params: Partial<GridParams>): Promise<GridParams> {
@@ -61,7 +92,7 @@ export async function updateStrategy(params: Partial<GridParams>): Promise<GridP
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(params),
   });
-  return r.json();
+  return readJson<GridParams>(r);
 }
 
 export async function updateMr(params: Partial<MRParams>): Promise<MRParams> {
@@ -70,7 +101,7 @@ export async function updateMr(params: Partial<MRParams>): Promise<MRParams> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(params),
   });
-  return r.json();
+  return readJson<MRParams>(r);
 }
 
 export function fmtUsd(n: number): string {

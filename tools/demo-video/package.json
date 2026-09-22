@@ -1,0 +1,7 @@
+{
+  "name": "@metrix/demo-video",
+  "private": true,
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  }
+}

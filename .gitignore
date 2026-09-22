@@ -17,3 +17,8 @@ coverage/
 ml/weights.pt
 ml/__pycache__/
 
+# contest demo intermediates (keep final mp4 under docs/ if we later commit it)
+demo-output/
+tools/demo-video/node_modules/
+docs/_submit_out/
+

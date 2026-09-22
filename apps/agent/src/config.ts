@@ -1,9 +1,10 @@
 import "dotenv/config";
+import type { AgentMode } from "@metrix/shared";
 
 export const config = {
   port: Number(process.env.PORT ?? 8787),
   // sim = 模拟行情+成交 | testnet = Kuru 测试网真实交易 | live = Kuru 主网
-  mode: (process.env.AGENT_MODE ?? "sim") as "sim" | "testnet" | "live",
+  mode: (process.env.AGENT_MODE ?? "sim") as AgentMode,
   pollIntervalMs: Number(process.env.POLL_INTERVAL_MS ?? 3000),
 
   // 模拟模式参数
@@ -51,23 +52,10 @@ export const config = {
     threshold: Number(process.env.ML_THRESHOLD ?? 0.6),
   },
 
-  // LLM
-  llmApiBase: process.env.LLM_API_BASE ?? "",
-  llmApiKey: process.env.LLM_API_KEY ?? "",
-  llmModel: process.env.LLM_MODEL ?? "",
+  // LLM：魔搭 API-Inference。未配置 Key 时指令走本地规则，不假装已调用模型。
+  llmApiBase: process.env.LLM_API_BASE || "https://api-inference.modelscope.cn/v1",
+  llmApiKey: process.env.LLM_API_KEY || process.env.MODELSCOPE_API_KEY || "",
+  llmModel: process.env.LLM_MODEL || "Qwen/Qwen3.5-35B-A3B",
 } as const;
 
-export const riskLimits = {
-  /** R1 单笔限额：≤ 金库净值 5% */
-  maxOrderPct: 0.05,
-  /** R2 单市场敞口：≤ 金库净值 30% */
-  maxExposurePct: 0.3,
-  /** R3 日亏损熔断：当日 -3% 停止开新仓 */
-  dailyLossHaltPct: -0.03,
-  /** R4 最大回撤强平：高水位法 -10%，全平 + 暂停 */
-  maxDrawdownPct: -0.1,
-  /** R5 滑点保护：IOC minAmountOut ≥ 预估 × (1-0.5%) */
-  maxSlippageBps: 50,
-  /** R6 频率/幂等：同市场 5s 内 ≤1 单 */
-  minSecondsBetweenOrders: 5,
-} as const;
+export { riskLimits } from "./risk/risk-limits";

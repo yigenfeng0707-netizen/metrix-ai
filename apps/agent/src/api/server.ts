@@ -4,11 +4,13 @@ import cors from "@fastify/cors";
 import websocket from "@fastify/websocket";
 import type { GridParams, MRParams } from "@metrix/shared";
 import { store, type StoredCommand } from "../store";
-import { parseIntent } from "../llm/intent-parser";
-import { closeAllPositions } from "../execution/sim-adapter";
+import { llmConfigured } from "../llm/modelscope";
+import { parseCommand } from "../llm/parse-command";
+import { applyParsedCommand } from "../llm/apply-command";
 import { config } from "../config";
 import { perpSide } from "../strategy/perp-trend";
 import { dbStats } from "../db/pg";
+import { snapshotRiskLimits } from "../risk/risk-limits";
 
 type WsConn = { send: (data: string) => void; on: (ev: string, cb: () => void) => void };
 
@@ -44,7 +46,14 @@ export async function buildServer() {
     mr: store.params.mr,
     perp: { enabled: config.perpl.enabled, side: perpSide() },
     stats: { totalDecisions: store.decisions.length },
-    db: await dbStats(),
+    db: await dbStats().catch(() => null),
+    mode: config.mode,
+    riskLimits: snapshotRiskLimits(),
+    llm: {
+      production: llmConfigured(),
+      parser: llmConfigured() ? "modelscope" : "offline-regex",
+      model: llmConfigured() ? config.llmModel : null,
+    },
   }));
 
   app.get("/vaults/demo/decisions", async (req) => {
@@ -57,7 +66,7 @@ export async function buildServer() {
   app.post("/vaults/demo/command", async (req, reply) => {
     const { text } = (req.body ?? {}) as { text?: string };
     if (!text?.trim()) return reply.code(400).send({ error: "text is required" });
-    const parsed = parseIntent(text);
+    const { parsed, parser, model } = await parseCommand(text);
     const cmd: StoredCommand = {
       id: randomUUID(),
       text,
@@ -66,27 +75,21 @@ export async function buildServer() {
       ts: Date.now(),
     };
     store.commands.set(cmd.id, cmd);
-    return reply.code(201).send({ id: cmd.id, parsed: cmd.parsed });
+    return reply.code(201).send({ id: cmd.id, parsed: cmd.parsed, parser, model });
   });
 
-  // 用户批准后应用指令
+  // 用户批准后应用指令（set_risk 只能调严；失败不得假装已执行）
   app.post("/vaults/demo/command/:id/confirm", async (req, reply) => {
     const cmd = store.commands.get((req.params as { id: string }).id);
     if (!cmd) return reply.code(404).send({ error: "command not found" });
-    if (cmd.status === "applied") return { id: cmd.id, status: "applied", applied: cmd.parsed };
-
-    cmd.status = "applied";
-    if (cmd.parsed.action === "update_strategy") {
-      const p = cmd.parsed.params as Partial<GridParams>;
-      if (typeof p.lower === "number") store.params.grid.lower = p.lower;
-      if (typeof p.upper === "number") store.params.grid.upper = p.upper;
-      if (typeof p.grids === "number") store.params.grid.grids = Math.max(2, Math.round(p.grids));
-    } else if (cmd.parsed.action === "set_risk") {
-      // 风控只能调严：W2 接入风控配置表后实现上限校验
-    } else if (cmd.parsed.action === "close_position") {
-      closeAllPositions();
+    if (cmd.status !== "pending") {
+      return { id: cmd.id, status: cmd.status, applied: cmd.parsed, result: cmd.result };
     }
-    return { id: cmd.id, status: cmd.status, applied: cmd.parsed };
+
+    const result = applyParsedCommand(cmd.parsed);
+    cmd.result = result;
+    cmd.status = result.status === "rejected" ? "rejected" : "applied";
+    return { id: cmd.id, status: cmd.status, applied: cmd.parsed, result };
   });
 
   // 更新网格参数

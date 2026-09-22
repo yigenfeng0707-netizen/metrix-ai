@@ -7,6 +7,13 @@ import assert from "node:assert/strict";
 import { checkRisk, markOrderSent } from "../src/risk/risk-gate";
 import { floorWithSlippage } from "../src/execution/kuru-adapter";
 import { riskLimits } from "../src/config";
+import { applySetRiskFromParams, resetRiskLimits, snapshotRiskLimits } from "../src/risk/risk-limits";
+import { applyParsedCommand } from "../src/llm/apply-command";
+import { parseIntent } from "../src/llm/intent-parser";
+import { extractJsonObject } from "../src/llm/modelscope";
+import { commandFromModelJson } from "../src/llm/parse-command";
+import { executeSim } from "../src/execution/sim-adapter";
+import { fillProof, isOnchainTxHash } from "@metrix/shared";
 import { store } from "../src/store";
 import { evaluateGrid, resetGrid } from "../src/strategy/grid";
 import { evaluateMeanReversion, isStrongTrend, emaSeries, resetMeanReversion } from "../src/strategy/mean-reversion";
@@ -26,7 +33,9 @@ function t(name: string, fn: () => void): void {
 }
 
 function resetStore(): void {
+  resetRiskLimits();
   store.decisions = [];
+  store.commands.clear();
   store.seenClientIds.clear();
   store.recentOrderTs = 0;
   store.account = {
@@ -223,6 +232,126 @@ t("与配置 maxSlippageBps 一致：100 → 99.5% 下限", () => {
 t("非正预估抛错（禁止退回 minAmountOut=0）", () => {
   assert.throws(() => floorWithSlippage(0, 50));
   assert.throws(() => floorWithSlippage(-1, 50));
+});
+
+// ---------------- sim 成交凭证 ----------------
+console.log("\n[sim-fill-proof]");
+
+t("executeSim 不返回假 0x hash", () => {
+  resetStore();
+  const r = executeSim(intent({ size: "1", price: "100" }));
+  assert.equal("txHash" in r, false);
+  assert.ok(r.fillPrice);
+});
+
+t("sim venue 即使带假 0x 也不视为链上凭证", () => {
+  const fake = "0x" + "ab".repeat(32);
+  const proof = fillProof(
+    {
+      txHash: fake,
+      executionKind: undefined,
+      intent: intent({ venue: "sim" }),
+    },
+    "sim",
+  );
+  assert.equal(proof.kind, "simulation");
+});
+
+t("kuru 真 0x 才生成 MonadScan 测试网链接", () => {
+  const hash = "0x" + "11".repeat(32);
+  const proof = fillProof(
+    {
+      txHash: hash,
+      executionKind: "onchain",
+      intent: intent({ venue: "kuru" }),
+    },
+    "testnet",
+  );
+  assert.equal(proof.kind, "onchain");
+  if (proof.kind === "onchain") {
+    assert.equal(proof.url, `https://testnet.monadscan.com/tx/${hash}`);
+    assert.equal(isOnchainTxHash(hash), true);
+  }
+});
+
+t("perpl 回执不链到 MonadScan", () => {
+  const proof = fillProof(
+    {
+      txHash: "perpl-rq1",
+      executionKind: "venue_ack",
+      intent: intent({ venue: "perpl" }),
+    },
+    "testnet",
+  );
+  assert.equal(proof.kind, "venue_ack");
+});
+
+// ---------------- set_risk 只能调严 ----------------
+console.log("\n[set-risk]");
+
+t("parseIntent：仅「全部平仓」才是 close_position", () => {
+  assert.equal(parseIntent("全部平仓").action, "close_position");
+});
+
+t("parseIntent 回撤 5% 就全平 → set_risk 而非立刻平仓", () => {
+  const p = parseIntent("回撤超过 5% 就全平");
+  assert.equal(p.action, "set_risk");
+  assert.equal(p.params.maxDrawdownPct, -0.05);
+  assert.equal(p.requiresConfirmation, true);
+});
+
+t("确认后收紧 R4：-10% → -5% 生效", () => {
+  resetStore();
+  const r = applySetRiskFromParams({ maxDrawdownPct: -0.05 });
+  assert.equal(r.status, "applied");
+  assert.equal(snapshotRiskLimits().maxDrawdownPct, -0.05);
+});
+
+t("放宽 R4：-5% 再请求 -15% 被拒且标明暂未生效", () => {
+  resetStore();
+  applySetRiskFromParams({ maxDrawdownPct: -0.05 });
+  const r = applySetRiskFromParams({ maxDrawdownPct: -0.15 });
+  assert.equal(r.status, "rejected");
+  assert.match(r.note, /暂未生效|只能调严/);
+  assert.equal(snapshotRiskLimits().maxDrawdownPct, -0.05);
+});
+
+t("未知风控字段不得假确认", () => {
+  resetStore();
+  const r = applySetRiskFromParams({ mysteryCap: 1 });
+  assert.equal(r.status, "rejected");
+  assert.match(r.skipped[0].reason, /暂未生效/);
+});
+
+t("魔搭 JSON：回撤句必须是 set_risk", () => {
+  const raw = extractJsonObject('```json\n{"action":"set_risk","params":{"maxDrawdownPct":-0.05},"note":"收紧回撤"}\n```');
+  const p = commandFromModelJson(raw);
+  assert.ok(p);
+  assert.equal(p?.action, "set_risk");
+  assert.equal(p?.params.maxDrawdownPct, -0.05);
+  assert.equal(p?.requiresConfirmation, true);
+});
+
+t("魔搭 JSON：百分数回撤折成负小数", () => {
+  const p = commandFromModelJson({
+    action: "set_risk",
+    params: { maxDrawdownPct: 5 },
+    note: "收紧到 5%",
+  });
+  assert.equal(p?.params.maxDrawdownPct, -0.05);
+});
+
+t("魔搭 JSON：缺字段则拒绝，不假装解析成功", () => {
+  assert.equal(commandFromModelJson({ action: "update_strategy", params: {}, note: "x" }), null);
+  assert.equal(commandFromModelJson({ action: "buy_the_top", params: {}, note: "x" }), null);
+});
+
+t("applyParsedCommand set_risk 与直调一致", () => {
+  resetStore();
+  const parsed = parseIntent("风控回撤 8%");
+  const r = applyParsedCommand(parsed);
+  assert.equal(r.status, "applied");
+  assert.equal(snapshotRiskLimits().maxDrawdownPct, -0.08);
 });
 
 // ---------------- 汇总 ----------------

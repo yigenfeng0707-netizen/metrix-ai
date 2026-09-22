@@ -1,0 +1,89 @@
+{
+  "name": "Metrix AI",
+  "version": "round1-60s-silent",
+  "durationTargetSeconds": 80,
+  "playwrightDir": "tools/demo-video",
+  "baseUrl": "http://127.0.0.1:3000",
+  "healthUrl": "http://127.0.0.1:8787/healthz",
+  "outputDir": "demo-output",
+  "finalMp4": "docs/metrix-ai-demo-round1.mp4",
+  "viewport": { "width": 1920, "height": 1080 },
+  "mode": "record",
+  "burnSubtitles": true,
+  "subtitles": true,
+  "crf": 20,
+  "preset": "veryfast",
+  "audioBitrate": "128k",
+  "silent": true,
+  "note": "No TTS. Title card must say sim mode + Kuru testnet not Perpl. Record LOCAL sim UI only — never gsym236998-metrix-ai.ms.show.",
+  "scenes": [
+    {
+      "id": "intro",
+      "type": "title",
+      "title": "Metrix AI",
+      "subtitle": "Public demo is sim mode · Kuru testnet not Perpl · Track 01",
+      "narration": "",
+      "holdSeconds": 8,
+      "minDuration": 8
+    },
+    {
+      "id": "home",
+      "type": "browser",
+      "narration": "Metrix AI — autonomous trading agent on Monad (Track 01)",
+      "minDuration": 12,
+      "actions": [
+        { "goto": "/" },
+        { "wait": 4000 },
+        { "scroll": { "y": 220 } },
+        { "wait": 2500 }
+      ]
+    },
+    {
+      "id": "trade",
+      "type": "browser",
+      "narration": "RiskGate R1–R6 is server-side. Demo vault is simulation.",
+      "minDuration": 22,
+      "actions": [
+        { "goto": "/trade" },
+        { "wait": 4000 },
+        { "scroll": { "y": 280 } },
+        { "wait": 4000 },
+        { "scroll": { "y": 240 } },
+        { "wait": 4000 }
+      ]
+    },
+    {
+      "id": "kuru_deposit",
+      "type": "browser",
+      "narration": "Verified Kuru testnet txs — deposit + IOC margin sell. Not Perpl.",
+      "minDuration": 16,
+      "actions": [
+        {
+          "goto": "https://testnet.monadscan.com/tx/0xe15c8218a6a64ae054b2cfb475cd7da15b86ebca9c23b007bb55ba3b241abb55"
+        },
+        { "wait": 7000 }
+      ]
+    },
+    {
+      "id": "kuru_ioc",
+      "type": "browser",
+      "narration": "Verified Kuru testnet txs — deposit + IOC margin sell. Not Perpl.",
+      "minDuration": 14,
+      "actions": [
+        {
+          "goto": "https://testnet.monadscan.com/tx/0x0b1b77cca2023b9676ec62be5ecd7ebcf0763b02d2b86c734a8af405931447a7"
+        },
+        { "wait": 7000 }
+      ]
+    },
+    {
+      "id": "outro",
+      "type": "title",
+      "title": "Repo public. Perpl adapter coded, not live-filled.",
+      "subtitle": "App gsym236998-metrix-ai.ms.show · github.com/yigenfeng0707-netizen/metrix-ai",
+      "narration": "",
+      "holdSeconds": 8,
+      "minDuration": 8
+    }
+  ]
+}

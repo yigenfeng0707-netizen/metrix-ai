@@ -6,6 +6,7 @@ import type { AccountState } from "@metrix/shared";
 import { getOverview, fmtUsd, type Overview } from "@/lib/api";
 import { useAgentStream } from "@/lib/useAgentStream";
 import Sparkline from "@/components/Sparkline";
+import ModeBanner from "@/components/ModeBanner";
 
 export default function HomePage() {
   const [data, setData] = useState<Overview | null>(null);
@@ -22,6 +23,7 @@ export default function HomePage() {
 
   useAgentStream(() => {
     getOverview().then((d) => {
+      setData(d);
       setAccount(d.account);
       setEquityHistory((h) => [...h.slice(-60), d.equity]);
     });
@@ -34,6 +36,7 @@ export default function HomePage() {
   return (
     <>
       <h1>{data.vault.name}</h1>
+      <ModeBanner mode={data.mode ?? "sim"} />
       <p className="subtitle">
         {data.vault.agent} ·{" "}
         <span className={`badge ${account.agentStatus === "running" ? "ok" : "rej"}`}>
@@ -67,7 +70,9 @@ export default function HomePage() {
           <div className={`stat-value ${account.drawdownPct > -0.05 ? "pos" : "neg"}`}>
             {(account.drawdownPct * 100).toFixed(2)}%
           </div>
-          <div className="muted small">-10% 触发强平熔断</div>
+          <div className="muted small">
+            {((data.riskLimits?.maxDrawdownPct ?? -0.1) * 100).toFixed(0)}% 触发强平熔断
+          </div>
         </div>
         <div className="card">
           <div className="stat-label">累计决策数</div>

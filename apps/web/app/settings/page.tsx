@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { GridParams, MRParams } from "@metrix/shared";
+import type { GridParams, MRParams, RiskLimits } from "@metrix/shared";
 import { getOverview, updateMr, updateStrategy } from "@/lib/api";
 import {
   meraCreateAccount,
@@ -24,6 +24,7 @@ export default function SettingsPage() {
   const [grid, setGrid] = useState<GridParams | null>(null);
   const [mr, setMr] = useState<MRParams | null>(null);
   const [perp, setPerp] = useState<{ enabled: boolean; side: string } | null>(null);
+  const [risk, setRisk] = useState<RiskLimits | null>(null);
   const [saved, setSaved] = useState(false);
   const [meraAddress, setMeraAddress] = useState<string | null>(null);
   const [meraHasCred, setMeraHasCred] = useState(false);
@@ -43,6 +44,7 @@ export default function SettingsPage() {
       setGrid(d.strategy);
       setMr(d.mr);
       setPerp(d.perp);
+      setRisk(d.riskLimits ?? null);
     });
     setMeraAddress(loadMeraAddress());
     setMeraHasCred(hasMeraCredential());
@@ -274,25 +276,25 @@ export default function SettingsPage() {
           <div className="small muted">
             {perp?.enabled
               ? `已启用 · 当前仓位：${perp.side === "flat" ? "空仓" : perp.side === "long" ? "多" : "空"}`
-              : "未启用（PERPL_ENABLED=false）"}
+              : "未启用（PERPL_ENABLED=false）。适配器已写，尚无 Perpl 成交哈希。"}
           </div>
         </div>
         <span className={`badge ${perp?.enabled ? "ok" : "rej"}`}>{perp?.enabled ? "ON" : "OFF"}</span>
       </div>
       <p className="muted small">
-        启用需在 .env 配置 PERPL_API_KEY / PERPL_ACCOUNT_ID（API Key 注册 + 链上开户）。
+        启用需在本机 .env 配置 Perpl 测试网密钥。Settings 里的 Kuru 测试网 hash 不是 Perpl 成交。
       </p>
 
-      <h2>风控硬规则（只读）</h2>
+      <h2>风控硬规则（只读；Chat 只能调严）</h2>
       <div className="card">
         <table>
           <tbody>
-            <tr><td>R1 单笔限额</td><td>≤ 净值 5%</td></tr>
-            <tr><td>R2 单市场敞口</td><td>≤ 净值 30%</td></tr>
-            <tr><td>R3 日亏损熔断</td><td>-3% 停止开新仓</td></tr>
-            <tr><td>R4 最大回撤强平</td><td>-10% 全平 + 暂停</td></tr>
-            <tr><td>R5 滑点保护</td><td>链上 minAmountOut 强制</td></tr>
-            <tr><td>R6 频率/幂等</td><td>5s 限 1 单</td></tr>
+            <tr><td>R1 单笔限额</td><td>≤ 净值 {((risk?.maxOrderPct ?? 0.05) * 100).toFixed(0)}%</td></tr>
+            <tr><td>R2 单市场敞口</td><td>≤ 净值 {((risk?.maxExposurePct ?? 0.3) * 100).toFixed(0)}%</td></tr>
+            <tr><td>R3 日亏损熔断</td><td>{((risk?.dailyLossHaltPct ?? -0.03) * 100).toFixed(0)}% 停止开新仓</td></tr>
+            <tr><td>R4 最大回撤强平</td><td>{((risk?.maxDrawdownPct ?? -0.1) * 100).toFixed(0)}% 全平 + 暂停</td></tr>
+            <tr><td>R5 滑点保护</td><td>链上 minAmountOut 强制（{risk?.maxSlippageBps ?? 50} bps）</td></tr>
+            <tr><td>R6 频率/幂等</td><td>{risk?.minSecondsBetweenOrders ?? 5}s 限 1 单</td></tr>
           </tbody>
         </table>
       </div>

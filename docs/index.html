@@ -61,11 +61,11 @@
   td.num{text-align:right;font-variant-numeric:tabular-nums;color:var(--green);font-weight:600;white-space:nowrap}
   .total td{font-weight:700;border-bottom:none}
 
-  /* 视频占位 */
-  .video{aspect-ratio:16/9;background:linear-gradient(135deg,#131a2c,#0d1322);border:1px dashed var(--border);
-    border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted)}
-  .video .play{width:64px;height:64px;border-radius:50%;background:rgba(79,140,255,.15);border:1px solid var(--accent);
-    display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--accent)}
+  /* 视频播放器 */
+  .video-frame{aspect-ratio:16/9;background:#0d1322;border:1px solid var(--border);
+    border-radius:16px;overflow:hidden}
+  .video-frame video{width:100%;height:100%;display:block;background:#000;object-fit:contain}
+  .video-cap{color:var(--muted);font-size:13px;margin-top:10px}
 
   .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   @media(max-width:720px){.two{grid-template-columns:1fr}}
@@ -138,13 +138,15 @@
 
   <section id="demo">
     <div class="wrap">
-      <h2>Demo（3 分钟）</h2>
-      <p class="sec-sub">充值 → 自主交易 → 逐笔审计 → 一句话指挥 → 风控熔断演示。</p>
-      <div class="video" id="video-placeholder">
-        <div class="play">▶</div>
-        <div>Demo 视频尚未拍摄（脚本已收口；短版可按公网 sim App 录）。提交截止以平台 10/14 11:59 GMT+8 为准。</div>
-        <div class="small">先打开公网 App：<span class="mono">https://gsym236998-metrix-ai.ms.show</span>（不要把 localhost 当评审链接）</div>
+      <h2>Demo · 约 1 分钟</h2>
+      <p class="sec-sub">本地 sim 界面走查 + Kuru 测试网已验证成交。无配音；英文字幕硬烧。不是 Perpl 成交。</p>
+      <div class="video-frame">
+        <video id="demo-player" controls playsinline preload="metadata" poster="" src="metrix-ai-demo-round1.mp4">
+          浏览器不支持 HTML5 视频，请直接下载
+          <a href="metrix-ai-demo-round1.mp4">metrix-ai-demo-round1.mp4</a>
+        </video>
       </div>
+      <p class="video-cap">本地 sim UI（localhost:3000）+ MonadScan 测试网哈希。公网 App 仍是 <span class="mono">https://gsym236998-metrix-ai.ms.show</span>，评审不要用 localhost。</p>
     </div>
   </section>
 
