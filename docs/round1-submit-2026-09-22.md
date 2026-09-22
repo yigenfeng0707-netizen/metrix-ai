@@ -1,18 +1,18 @@
 # Round-1 粘贴稿（2026-09-22 通道开放当天用）
 
-> 状态：**尚未提交**。本页只是把表单字段准备好。9/21 写就，9/22 打开 https://hackathon.monad.xyz/ 后人工粘贴。
+> 状态：**尚未提交**。2026-09-22 16:34 GMT+8 登录核对：Submission 页写窗口 **2 Oct to 14 Oct**，没有最终 Submit 按钮。10/2 再打开 https://hackathon.monad.xyz/dashboard → 粘贴后点最终 **Submit**（不要只点 SAVE CHANGES）。
 > 体验链接填魔搭 App HTTPS，禁止 localhost / ngrok / cloudflared。GitHub Pages 只作项目介绍页。
 > 英文进表单；中文是操作备注。
 > **Discord：** Profile 的 Discord 为 optional。Dashboard「Join the server / Metropolis role」不在 Next steps 五步里。大陆打不开 Discord **不阻塞 9/22 Submit**。飞书不能填进 Discord 栏，也换不了 Metropolis role。
 
 ## 操作顺序（9/22）
 
-1. 打开报名平台，确认 Track 01。
-2. Live demo / 体验填：`https://gsym236998-metrix-ai.ms.show` ；Homepage 可填 Pages 介绍页。
+1. 打开 https://hackathon.monad.xyz/dashboard ，GitHub 登录账号 **fengyigen**，确认 Track 01。
+2. Live demo / 体验只填：`https://gsym236998-metrix-ai.ms.show` ；Homepage 填 Pages 介绍页。**Demo video 没成片就留空。**
 3. GitHub：`https://github.com/yigenfeng0707-netizen/metrix-ai`
 4. 长描述粘贴下面英文块。
-5. 各 Bounty 勾选后粘贴对应段落（Perpl 段落已去掉 Kuru 哈希冒充）。
-6. 提交后截图存档。本文件不要改成「已提交」除非平台回执已拿到。
+5. 各 Bounty 勾选后粘贴对应段落（Perpl 段落已去掉 Kuru 哈希冒充）。可选勾选 Kuru 新市场，只用 4.7 诚实段（脚本有、没有深度盘）。
+6. **10/2 还差这一个按钮：** 点最终 **Submit / Submit your project**（不要只点 SAVE CHANGES）。提交后截图。本文件不要改成「已提交」除非平台回执已拿到。
 
 ## 链接（只填这些）
 
@@ -107,6 +107,23 @@ A venue-agnostic IntentOrder executor (sim / kuru / perpl adapters) signs only a
 
 ```
 Five-screen Next.js mobile shell + Mera passkey module (apps/web/lib/mera.ts) with AUSD/MON balance and a funding path to the agent vault. Public HTTPS App is https://gsym236998-metrix-ai.ms.show (passkey rpId binds to that hostname). GitHub Pages remains the intro page. On-chain proof remains Kuru testnet, not Perpl. PWA manifest is not shipped yet.
+```
+
+## Bounty 4.6 Community team
+
+```
+Solo builder (fengyigen) shipping in the open. GitHub commit history is public; intro page and HTTPS demo are live. Profile community is OpenBuild. Discord Metropolis role is optional and is not a 9/22 Submit blocker.
+```
+
+## Bounty 4.7 Kuru new assets / markets（Bring New Assets and Markets to Kuru）
+
+```
+Metrix AI includes a Kuru MonadDeployer script (apps/agent/scripts/create-mtx-market.ts) that can deploy an MTX token + MTX/MON market with initial AMM seed (2 MON quote, 1.6M MTX base) via official @kuru-labs/kuru-sdk.
+
+Honest status as of 2026-09-22:
+- Script exists and is the intended path for this bounty.
+- We have NOT published a live MTX market with order-book depth or organic volume. Do not treat the existing Kuru IOC hash as MTX-market trading evidence.
+- Verified on-chain activity remains the two Kuru testnet txs listed under bounty 4.1 (margin deposit + IOC margin sell on an existing book).
 ```
 
 ## 本地复现（不要填进「体验链接」）

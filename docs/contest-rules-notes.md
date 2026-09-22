@@ -3,8 +3,8 @@
 - 赛事：Monad Metropolis 全球线上黑客松。入口 https://hackathon.monad.xyz/ ；介绍 https://monad.xyz/metropolis
 - 赛道：Track 01 Onchain Finance & Trading
 - 提交物（分析报告 2026-09-15）：可运行产品 + 公开项目主页（Demo + 说明 + 代码链接）；评审要能验证 6 周窗口内的新工作
-- 截止：报名后台与 Prizes 页写 **2026-10-14 11:59 GMT+8**（2026-09-21 登录核对）。分析报告 9/15 稿仍写 10/13，以平台为准。
-- 首轮通道：后台 **Submit your project Opens 22 Sep 11:59 GMT+8**；9/21 已保存项目详情，未点最终 Submit
+- 截止：报名后台写 **14 Oct, 11:59 GMT+8**。
+- 提交通道：**2026-09-22 16:34 GMT+8 登录核对**，Dashboard 写 Submit Opens **2 Oct 03:59 UTC**，Submission 页写 *runs 2 Oct to 14 Oct*。昨天 9/21 曾显示 Opens 22 Sep，以今天页面为准。草稿已保存，未 Submitted。
 - 小红书参赛笔记：不适用本赛，不要按国内 AI Coding 模板发 XHS
 
 ## Discord vs 飞书（2026-09-21 平台核对）
@@ -20,6 +20,6 @@
 
 - **PWA**：要改 `apps/web`（manifest + 图标；SW 还会碰到 `/ws`、`/healthz` 代理）。会触发魔搭 Docker 全量重建（约 40 分钟）。半套 SW 有缓存旧包风险。9/21 不上线。
 - **Perpl 真成交 / 主网 / 生产 LLM**：缺账户、密钥或资金，不硬做。
-- **最终 Submit / bounty 说明**：等 9/22 提交表。
+- **最终 Submit / bounty 说明**：2026-09-22 后台仍写 *complete those fields when you submit*；窗口 **2 Oct–14 Oct**。
 
 详细调研：工作区根目录 `Monad-Metropolis-线上参赛分析报告.md`。
