@@ -1,5 +1,11 @@
 # YouTube Studio — paste when uploading (Unlisted)
 
+## Channel
+https://studio.youtube.com/channel/UCoiZETBc9_Sl3DpNfEATlBg
+
+## Upload page
+https://studio.youtube.com/channel/UCoiZETBc9_Sl3DpNfEATlBg/videos/upload?d=ud
+
 ## File
 D:\APPs\Monad 全球旗舰黑客松\metrix-ai\docs\metrix-ai-demo-round1.mp4
 
@@ -23,6 +29,8 @@ Intro: https://yigenfeng0707-netizen.github.io/metrix-ai/
 Unlisted
 
 ## After publish
-Paste the watch URL into hackathon.monad.xyz project Demo field (and docs/continue-2026-09-22.md).
-Keep the GitHub raw MP4 as backup:
+Watch URL: https://youtu.be/MEC4do8XKC0
+Video id: MEC4do8XKC0
+Visibility must be **Unlisted** (not Draft / Private) so judges can open it.
+Paste into hackathon.monad.xyz Demo field and keep the GitHub raw MP4 as backup:
 https://raw.githubusercontent.com/yigenfeng0707-netizen/metrix-ai/main/docs/metrix-ai-demo-round1.mp4
