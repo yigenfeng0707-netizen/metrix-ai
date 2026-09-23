@@ -29,8 +29,8 @@ Intro: https://yigenfeng0707-netizen.github.io/metrix-ai/
 Unlisted
 
 ## After publish
-Watch URL: https://youtu.be/MEC4do8XKC0
-Video id: MEC4do8XKC0
-Visibility must be **Unlisted** (not Draft / Private) so judges can open it.
+Watch URL: https://youtu.be/FF9rt_Gxd8U
+Video id: FF9rt_Gxd8U
+Published 2026-09-23 (oEmbed OK). Keep Unlisted.
 Paste into hackathon.monad.xyz Demo field and keep the GitHub raw MP4 as backup:
 https://raw.githubusercontent.com/yigenfeng0707-netizen/metrix-ai/main/docs/metrix-ai-demo-round1.mp4
