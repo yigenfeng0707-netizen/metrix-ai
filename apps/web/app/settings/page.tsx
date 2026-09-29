@@ -145,7 +145,7 @@ export default function SettingsPage() {
               {meraAddress
                 ? `已派生账户：${meraAddress.slice(0, 10)}…${meraAddress.slice(-6)}`
                 : meraHasCred
-                  ? "本机已有 passkey，点击登录重新派生同一账户"
+                  ? "本机已有 passkey，点击登录重新派生同一账户（BIP-44 已与官方路径对齐，请重新登录一次）"
                   : "尚未创建。点击后由浏览器/系统弹出 passkey 创建流程"}
             </div>
           </div>

@@ -51,7 +51,7 @@ R1 per-order cap ≤ 5% of equity · R2 per-market exposure ≤ 30% · R3 daily-
 WHAT'S BUILT (all working at submission time)
 - Autonomous agent loop: perceive → decide → risk-gate → execute → audit, with WebSocket push of every decision
 - Live trading on Monad testnet: real margin deposit and real IOC margin sell executed on Kuru (tx hashes in README and below)
-- Mobile-first 5 screens (Next.js; PWA manifest not shipped yet)
+- Mobile-first five-screen Next.js shell with Web App Manifest (add-to-home-screen; no offline Service Worker yet)
 - PostgreSQL write-through persistence of every decision and order
 - Docker Compose full stack (agent, web, ML service, PostgreSQL, Redis) and GitHub Actions CI with unit tests (risk + strategies + R5 floor)
 
@@ -130,7 +130,7 @@ https://testnet.monadscan.com/tx/0x0b1b77cca2023b9676ec62be5ecd7ebcf0763b02d2b86
 ### 4.5 Best Mobile Trading App on Monad — $10,000（Agora · Track 01）
 
 ```
-Metrix AI is a mobile-first Next.js shell (five screens: vault, live decision stream, portfolio, chat commands, strategy settings) with Mera passkey auth and AUSD/MON balance + funding toward the agent vault.
+Metrix AI is a mobile-first Next.js shell (five screens: vault, live decision stream, portfolio, chat commands, strategy settings) with Mera passkey auth, AUSD/MON balance + funding toward the agent vault, and a Web App Manifest for installable display.
 
 Honest status as of 2026-09-21:
 - Mera passkey register/login and AUSD balance read are implemented in apps/web/lib/mera.ts (needs HTTPS + matching rpId; live App hostname is gsym236998-metrix-ai.ms.show).
@@ -138,7 +138,7 @@ Honest status as of 2026-09-21:
 - Perpl live fills and a packaged PWA (manifest / service worker) are still in progress. Do not claim the Kuru IOC hash as a Perpl trade.
 ```
 
-> 自用备注：Mera D1–D3 代码已进仓；评审可点 App 为魔搭 Docker 创空间 https://gsym236998-metrix-ai.ms.show（Running）。Pages 只作介绍页。Agora 全 spec 仍缺 Perpl 真成交 + 可安装 PWA。
+> 自用备注：Mera D1–D3 代码已进仓（9/29 已修 BIP-44 路径 + 最小 manifest）；评审可点 App 为魔搭 Docker 创空间 https://gsym236998-metrix-ai.ms.show（Running）。Pages 只作介绍页。Agora 全 spec 仍缺 Perpl 真成交；manifest 已有、无 SW。
 
 ### 4.6 Best Community Team Project — $5,000（Monad Foundation · All tracks）
 

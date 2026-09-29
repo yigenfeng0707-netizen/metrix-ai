@@ -13,7 +13,8 @@ import { entropyToMnemonic, mnemonicToSeedSync } from "@scure/bip39";
 import { wordlist } from "@scure/bip39/wordlists/english.js";
 
 const CRED_KEY = "metrix.mera.credential";
-const ADDR_KEY = "metrix.mera.address";
+/** v2：BIP-44 路径修正后地址会变；勿读回 v1 缓存，避免展示错误地址 */
+const ADDR_KEY = "metrix.mera.address.v2";
 
 export interface StoredCredential {
   credentialId: string;
@@ -41,10 +42,14 @@ function saveStored(c: StoredCredential): void {
   localStorage.setItem(CRED_KEY, JSON.stringify(c));
 }
 
-/** PRF 输出 → BIP-39 助记词 → BIP-44 派生 EVM 私钥（index 可派生多账户） */
+/**
+ * PRF 输出 → BIP-39 助记词 → BIP-44 派生 EVM 私钥（index 可派生多账户）。
+ * 路径必须与官方 docs.monad.xyz/guides/mera 一致：m/44'/60'/0'/0/${index}
+ * （旧实现误写成 m/44'/60'/0'/0'，与 MetaMask/Rabby 不可互通。）
+ */
 function deriveEvmPrivateKey(prfOutput: Uint8Array, index = 0): Uint8Array {
   const seed = mnemonicToSeedSync(entropyToMnemonic(prfOutput, wordlist));
-  const node = HDKey.fromMasterSeed(seed).derive("m/44'/60'/" + 0 + "'/" + index + "'");
+  const node = HDKey.fromMasterSeed(seed).derive(`m/44'/60'/0'/0/${index}`);
   if (node.privateKey === null) throw new Error("derivation produced no key");
   return node.privateKey;
 }
@@ -110,27 +115,33 @@ async function keyFromPrf(prfOutput: Uint8Array): Promise<{
 // ---------- Monad 主网：余额查询 + 转账（D3 资金流） ----------
 export const AUSD_ADDRESS = "0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a" as const;
 const AUSD_DECIMALS = 6;
-const MONAD_MAINNET = {
-  id: 143,
-  name: "monad",
-  network: "monad",
-  nativeCurrency: { name: "MON", symbol: "MON", decimals: 18 },
-  rpcUrls: { default: { http: ["https://rpc.monad.xyz"] } },
-} as const;
+/** 优先 QuickNode 等赞助 RPC（NEXT_PUBLIC_RPC_URL），否则官方公共 RPC */
+const MAINNET_RPC =
+  (typeof process !== "undefined" && process.env.NEXT_PUBLIC_RPC_URL?.trim()) ||
+  "https://rpc.monad.xyz";
+
+async function mainnetChain() {
+  const { monad } = await import("viem/chains");
+  return monad;
+}
 
 async function mainnetClient() {
   const { createPublicClient, http } = await import("viem");
-  return createPublicClient({ chain: MONAD_MAINNET, transport: http("https://rpc.monad.xyz") });
+  return createPublicClient({ chain: await mainnetChain(), transport: http(MAINNET_RPC) });
 }
 
-async function walletClient(privateKey: `0x${string}`) {
+async function walletClientFromKey(privateKey: `0x${string}`) {
   const { createWalletClient, http } = await import("viem");
-  const { privateKeyToAccount } = await import("viem/accounts");
-  return createWalletClient({
-    chain: MONAD_MAINNET,
-    transport: http("https://rpc.monad.xyz"),
-    account: privateKeyToAccount(privateKey),
+  const { createSecp256k1SigningSession } = await import("@category-labs/mera");
+  const { toViemAccount } = await import("@category-labs/mera/viem");
+  const { hexToBytes } = await import("viem");
+  const session = createSecp256k1SigningSession({ privateKey: hexToBytes(privateKey) });
+  const client = createWalletClient({
+    chain: await mainnetChain(),
+    transport: http(MAINNET_RPC),
+    account: toViemAccount(session),
   });
+  return { client, session };
 }
 
 const ERC20_ABI = [
@@ -176,7 +187,8 @@ export async function getMonBalance(address: string): Promise<number> {
 
 /**
  * 从 passkey 派生账户转出原生 MON。
- * ⚠ Monad 规则：按"声明 gasLimit"收费——必须显式传 gas，不能依赖估算（官方文档明示）。
+ * ⚠ Monad 规则：按「声明 gasLimit」收费——必须显式传 gas（官方文档明示）。
+ * 签名会话用完即 end()，避免私钥长期挂在 viem account 上。
  */
 export async function sendMonTransfer(
   privateKey: `0x${string}`,
@@ -184,13 +196,16 @@ export async function sendMonTransfer(
   amountMon: number,
 ): Promise<string> {
   const { parseEther } = await import("viem");
-  const client = await walletClient(privateKey);
-  const hash = await client.sendTransaction({
-    to: to as `0x${string}`,
-    value: parseEther(String(amountMon)),
-    gas: 21_000n, // 标准 MON 转账固定 gas
-  });
-  return hash;
+  const { client, session } = await walletClientFromKey(privateKey);
+  try {
+    return await client.sendTransaction({
+      to: to as `0x${string}`,
+      value: parseEther(String(amountMon)),
+      gas: 21_000n,
+    });
+  } finally {
+    session.end();
+  }
 }
 
 /** 从 passkey 派生账户转出 AUSD（ERC-20 transfer，显式 gas） */
@@ -200,13 +215,16 @@ export async function sendAusdTransfer(
   amountAusd: number,
 ): Promise<string> {
   const { parseUnits } = await import("viem");
-  const client = await walletClient(privateKey);
-  const hash = await client.writeContract({
-    address: AUSD_ADDRESS,
-    abi: ERC20_ABI,
-    functionName: "transfer",
-    args: [to as `0x${string}`, parseUnits(String(amountAusd), AUSD_DECIMALS)],
-    gas: 80_000n, // ERC-20 transfer 显式 gas（Monad 按声明收费）
-  });
-  return hash;
+  const { client, session } = await walletClientFromKey(privateKey);
+  try {
+    return await client.writeContract({
+      address: AUSD_ADDRESS,
+      abi: ERC20_ABI,
+      functionName: "transfer",
+      args: [to as `0x${string}`, parseUnits(String(amountAusd), AUSD_DECIMALS)],
+      gas: 80_000n,
+    });
+  } finally {
+    session.end();
+  }
 }

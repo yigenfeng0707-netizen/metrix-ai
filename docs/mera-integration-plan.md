@@ -2,6 +2,8 @@
 
 > 结论：**值得冲。** 官方文档完备（docs.monad.xyz/guides/mera），核心接入约 1.5 天，含 AUSD 展示约 2.5 天，在 10/5 功能冻结前完成无压力。
 > 拍板：✅ 做。排期 W2（9/24–9/26），不阻塞 9/22 首轮提交。
+>
+> **2026-09-29 进度：** D1–D2 代码已在 `apps/web/lib/mera.ts` + Settings；已修正 BIP-44 路径并加最小 PWA manifest。Agora 全 spec 仍缺 **Perpl 真成交** + 真机 passkey 录屏。
 
 ---
 

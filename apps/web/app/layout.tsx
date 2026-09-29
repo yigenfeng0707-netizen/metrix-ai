@@ -5,6 +5,16 @@ import BottomNav from "@/components/BottomNav";
 export const metadata: Metadata = {
   title: "Metrix AI — 自主交易 Agent",
   description: "Monad Metropolis Hackathon · Track 01 · The agent that doesn't just chat — it trades.",
+  applicationName: "Metrix AI",
+  appleWebApp: {
+    capable: true,
+    title: "Metrix AI",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/icon.svg" }],
+  },
 };
 
 export const viewport: Viewport = {
