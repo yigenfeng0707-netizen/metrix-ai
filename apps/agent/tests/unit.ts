@@ -13,6 +13,7 @@ import { parseIntent } from "../src/llm/intent-parser";
 import { extractJsonObject } from "../src/llm/modelscope";
 import { commandFromModelJson } from "../src/llm/parse-command";
 import { executeSim } from "../src/execution/sim-adapter";
+import { chancelaEnabled, toPlaceOrder } from "../src/execution/chancela-gate";
 import { fillProof, isOnchainTxHash } from "@metrix/shared";
 import { store } from "../src/store";
 import { evaluateGrid, resetGrid } from "../src/strategy/grid";
@@ -355,5 +356,22 @@ t("applyParsedCommand set_risk 与直调一致", () => {
 });
 
 // ---------------- 汇总 ----------------
+// ---- Chancela policy gate (optional) ----
+t("Chancela 闸门：未配置 CHANCELA_AGENT_ID 时关闭", () => {
+  assert.equal(chancelaEnabled(), false);
+});
+t("Chancela 闸门：订单名义金额按美分上取整", () => {
+  const o = toPlaceOrder(
+    { clientOrderId: "c1", venue: "kuru", market: "MON/USDC", side: "buy", type: "market", price: "0.031", size: "1000", strategy: "grid", reason: "t" },
+    1,
+  );
+  assert.deepEqual(o, { amount: 3100, market: "MON/USDC", side: "BUY", orderType: "MARKET", venue: "kuru", clientOrderId: "c1" });
+});
+t("Chancela 闸门：没有价格的订单不放行", () => {
+  assert.throws(() =>
+    toPlaceOrder({ clientOrderId: "c2", venue: "kuru", market: "MON/USDC", side: "sell", type: "market", size: "1", strategy: "grid", reason: "t" }, 1),
+  );
+});
+
 console.log(`\n结果: ${passed} 通过, ${failed} 失败`);
 if (failed > 0) process.exit(1);

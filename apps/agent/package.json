@@ -17,6 +17,8 @@
     "@metrix/shared": "*",
     "@noble/ed25519": "^2.1.0",
     "@noble/hashes": "^1.5.0",
+    "chancela-sdk": "^0.1.0",
+    "viem": "^2.21.32",
     "dotenv": "^16.4.5",
     "ethers": "^5.7.2",
     "fastify": "^5.0.0",

@@ -1,4 +1,5 @@
 import type { DecisionStatus, ExecutionKind, IntentOrder } from "@metrix/shared";
+import { withChancela } from "./chancela-gate";
 import { closeAllPositions, executeSim } from "./sim-adapter";
 
 export interface ExecutionResult {
@@ -13,8 +14,14 @@ export interface ExecutionResult {
  * sim  → 模拟成交（Demo / 联调），不生成假 0x hash
  * kuru → KuruSdk 真实下单（testnet/live），txHash 为链上凭证
  * perpl→ Perpl 交易 WS（适配器已写；默认 PERPL_ENABLED=false，尚未主网/测试网成交验证）
+ *
+ * 配置 CHANCELA_AGENT_ID 后，非 sim 订单先经 Chancela 链上策略闸门放行（见 chancela-gate.ts）；未配置则行为不变。
  */
-export async function execute(intent: IntentOrder): Promise<ExecutionResult> {
+export function execute(intent: IntentOrder): Promise<ExecutionResult> {
+  return withChancela(intent, () => dispatch(intent));
+}
+
+async function dispatch(intent: IntentOrder): Promise<ExecutionResult> {
   if (intent.venue === "sim") {
     const r = executeSim(intent);
     return { status: "executed", fillPrice: r.fillPrice, executionKind: "simulation" };
