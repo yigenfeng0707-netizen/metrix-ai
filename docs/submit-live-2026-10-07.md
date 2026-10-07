@@ -15,11 +15,24 @@ Autonomous Monad trading agent: Kuru spot proofs on-chain, RiskGate on every int
 Metrix AI is an autonomous trading agent on Monad. Spot routes through Kuru's onchain CLOB with verified testnet txs. Six RiskGate rules and a Perpl analytics/risk panel ship in the public app; Perpl fills are not live-verified so we are not claiming the Agora mobile bounty. Chat uses ModelScope Qwen when configured.
 ```
 
-**Tech demo / Pitch video**（可暂共用）
+**Tech demo / Pitch video**
+
+本地已分轨成片（2026-10-07），已 push 到 `main`：
+- Pitch `docs/metrix-ai-pitch.mp4`（~50s）
+- Tech `docs/metrix-ai-tech-demo.mp4`（~105s）
+
+GitHub raw 备份：
+```
+https://raw.githubusercontent.com/yigenfeng0707-netizen/metrix-ai/main/docs/metrix-ai-pitch.mp4
+https://raw.githubusercontent.com/yigenfeng0707-netizen/metrix-ai/main/docs/metrix-ai-tech-demo.mp4
+```
+
+提交页视频栏仍可用旧 Unlisted（待你上传新片后替换）：
 ```
 https://youtu.be/FF9rt_Gxd8U
 ```
-说明：Unlisted 保持不变；描述已改为 Tech walkthrough。分镜见 `docs/demo-video-storyboard-split.md`。
+
+上传文案：`docs/youtube-upload-copy.md`（CDP 自动化撞到 Google 登录墙，需本机已登录的 Chrome 手动传 Unlisted）。
 
 **Live product**
 ```

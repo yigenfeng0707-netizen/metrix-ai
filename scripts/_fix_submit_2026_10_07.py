@@ -48,7 +48,9 @@ ACCESS = """1) Open https://gsym236998-metrix-ai.ms.show (Ctrl+F5; no login).
 5) Settings: optional Mera passkey + AUSD/MON balance UI.
 
 Docs: https://github.com/yigenfeng0707-netizen/metrix-ai/blob/main/docs/user-manual.md
-Tech demo video is a walkthrough (SIM + Kuru proofs); Pitch may reuse the same Unlisted URL until a separate cut is uploaded.
+Pitch MP4 (~50s): https://raw.githubusercontent.com/yigenfeng0707-netizen/metrix-ai/main/docs/metrix-ai-pitch.mp4
+Tech MP4 (~105s): https://raw.githubusercontent.com/yigenfeng0707-netizen/metrix-ai/main/docs/metrix-ai-tech-demo.mp4
+YouTube Unlisted field may still show the prior cut until Studio upload of the two new files.
 Do not use localhost / tunnels."""
 
 # URL-only field on the form (do not put prose — it gets percent-encoded)
