@@ -1,6 +1,7 @@
 # Metropolis Submit — 全面修复后（2026-10-07）
 
-> 在 10/2 Ready for judging 基础上更新：撤 Agora、加强 Risk/Perpl 叙事、诚实 tagline。
+> **已保存：** Ready for judging · Last saved Oct 7, 2026 at 09:22 UTC · Agora REMOVE · 保留 Community / Kuru / Analytics。  
+> Live 已部署：`healthz.version=ba423d9…`，`db.backend=file`，`/vaults/demo/perpl/status` 可访问。
 
 ## 必改字段（英文粘贴）
 
