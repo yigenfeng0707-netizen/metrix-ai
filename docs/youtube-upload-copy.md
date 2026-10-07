@@ -58,13 +58,13 @@ Not an Agora Perpl live-trade demo.
 ## Visibility
 Unlisted（勿改 Private）
 
-## After publish — paste into hackathon.monad.xyz
-- Pitch video field → Pitch YouTube URL
-- Tech demo field → Tech YouTube URL
+## Published（2026-10-07 · Unlisted）已写入提交页
+- Pitch: https://youtu.be/wlFV0CAUIpo
+- Tech: https://youtu.be/hCtYQJieeso
 
-## GitHub raw backup（push 后可用）
+## GitHub raw backup
 - Pitch: https://raw.githubusercontent.com/yigenfeng0707-netizen/metrix-ai/main/docs/metrix-ai-pitch.mp4
 - Tech: https://raw.githubusercontent.com/yigenfeng0707-netizen/metrix-ai/main/docs/metrix-ai-tech-demo.mp4
 
-## Legacy（旧片，可保留）
-Watch URL: https://youtu.be/FF9rt_Gxd8U · keep Unlisted
+## Legacy
+https://youtu.be/FF9rt_Gxd8U
