@@ -27,14 +27,15 @@ export default function TradePage() {
   return (
     <>
       <h1>实时决策流</h1>
-      <ModeBanner mode={mode} quoteSource={decisions?.[0]?.book?.quoteSource} />
       <KuruEvidence compact />
+      <ModeBanner mode={mode} quoteSource={decisions?.[0]?.book?.quoteSource} />
       <h2>Perpl Analytics / Risk</h2>
       <PerplRiskPanel compact />
+      <h2>Decision stream</h2>
       {decisions === null && <p className="muted">加载中…</p>}
       {decisions?.length === 0 && (
         <p className="muted">
-          暂无决策。Agent 每 3 秒评估一次行情，价格穿越网格线时会产生交易。
+          暂无决策。Agent 评估行情时会产生交易；Simulation 徽章只标本地模拟，上方 Kuru hash 才是链上证据。
         </p>
       )}
       {decisions?.map((d) => (

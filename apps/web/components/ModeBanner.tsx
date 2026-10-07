@@ -10,21 +10,24 @@ export default function ModeBanner({
   if (mode === "sim") {
     return (
       <p className="subtitle">
-        当前 <span className="badge sim">SIM</span> 演示模式：决策流成交为本地模拟；下方 Kuru 测试网 hash 为真实链上证据。Perpl 公开行情与 RiskGate 裁决见 Trade 页看板。
+        Live decision stream may show{" "}
+        <span className="badge sim">Simulation</span> fills for safe demo loops.{" "}
+        <b>Kuru proofs above are real on-chain txs</b> — open MonadScan. Perpl fills are not
+        claimed.
       </p>
     );
   }
   const quote =
     quoteSource === "kuru_amm"
-      ? "行情为 AMM 隐含价（L2 盘口不可用时的诚实降级，不是 CLOB 最优档）。"
+      ? "Quotes: AMM implied (L2 empty — honest fallback)."
       : quoteSource === "kuru_l2"
-        ? "行情来自 Kuru L2。"
+        ? "Quotes: Kuru L2."
         : "";
   return (
     <p className="subtitle">
-      当前 <span className="badge ok">{mode === "live" ? "LIVE 主网" : "TESTNET"}</span>{" "}
-      {mode === "live" ? "真实下单。请确认金额与密钥。" : "Kuru 测试网。"} {quote}
-      Perpl 默认关闭，Kuru 测试网 hash 不是 Perpl 成交。
+      <span className="badge ok">{mode === "live" ? "LIVE" : "TESTNET"}</span>{" "}
+      {mode === "live" ? "Real orders — check size & keys." : "Kuru testnet path active."}{" "}
+      {quote} Perpl stays off until a fill is verified.
     </p>
   );
 }

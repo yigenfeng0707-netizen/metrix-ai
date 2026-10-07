@@ -37,13 +37,16 @@ export default function HomePage() {
   return (
     <>
       <h1>{data.vault.name}</h1>
-      <ModeBanner mode={data.mode ?? "sim"} />
       <p className="subtitle">
         {data.vault.agent} ·{" "}
         <span className={`badge ${account.agentStatus === "running" ? "ok" : "rej"}`}>
           {account.agentStatus === "running" ? "运行中" : account.agentStatus === "halted" ? "已熔断" : "已暂停"}
         </span>
       </p>
+
+      <h2 style={{ marginTop: 8 }}>On-chain evidence (judges start here)</h2>
+      <KuruEvidence />
+      <ModeBanner mode={data.mode ?? "sim"} />
 
       <div className="card">
         <div className="stat-label">金库净值（含持仓）</div>
@@ -100,9 +103,6 @@ export default function HomePage() {
           )}
         </span>
       </div>
-
-      <h2>链上证据</h2>
-      <KuruEvidence />
 
       <h2>快捷操作</h2>
       <div className="grid2">

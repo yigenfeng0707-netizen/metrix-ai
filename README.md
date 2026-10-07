@@ -17,8 +17,12 @@
 不要把 localhost 填进报名表。部署与保活见 `docs/deploy-https.md`。
 
 链上验证（Monad 测试网，**Kuru，不是 Perpl**）：
-- 充值 https://testnet.monadscan.com/tx/0xe15c8218a6a64ae054b2cfb475cd7da15b86ebca9c23b007bb55ba3b241abb55
-- IOC 卖出 https://testnet.monadscan.com/tx/0x0b1b77cca2023b9676ec62be5ecd7ebcf0763b02d2b86c734a8af405931447a7
+- MON 充值 https://testnet.monadscan.com/tx/0xabc80272d0e4ad917379d6cbddf53495c6cb0cb139dc342235023c811a4eae37
+- MTX 充值 https://testnet.monadscan.com/tx/0x589fd98dd556bc94d24cea967e877b7f1cd1327bb30a445ee7530f166a3489f8
+- GTC 挂单 https://testnet.monadscan.com/tx/0x25526fd1821f11034ef1c71c45f0df502f12d658bb39ae409ba444aa03f87664
+- IOC 卖出 https://testnet.monadscan.com/tx/0x4338b7ffc13bdea0d2846e84a173284fdd3679a69dcf67a7b286ca1c6c3f9591
+- （更早）充值 https://testnet.monadscan.com/tx/0xe15c8218a6a64ae054b2cfb475cd7da15b86ebca9c23b007bb55ba3b241abb55
+- （更早）IOC https://testnet.monadscan.com/tx/0x0b1b77cca2023b9676ec62be5ecd7ebcf0763b02d2b86c734a8af405931447a7
 
 ## 快速开始（Sim 模式，无需任何链上配置）
 
