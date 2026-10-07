@@ -1,0 +1,75 @@
+{
+  "name": "Metrix AI Pitch",
+  "version": "pitch-45s-silent",
+  "durationTargetSeconds": 45,
+  "playwrightDir": "tools/demo-video",
+  "baseUrl": "http://127.0.0.1:3000",
+  "healthUrl": "http://127.0.0.1:8787/healthz",
+  "outputDir": "demo-output/pitch",
+  "finalMp4": "docs/metrix-ai-pitch.mp4",
+  "viewport": { "width": 1920, "height": 1080 },
+  "mode": "record",
+  "burnSubtitles": true,
+  "subtitles": true,
+  "crf": 20,
+  "preset": "veryfast",
+  "audioBitrate": "128k",
+  "silent": true,
+  "note": "Pitch ≤45s. SIM + Kuru proofs. Do not claim Perpl fills.",
+  "scenes": [
+    {
+      "id": "intro",
+      "type": "title",
+      "title": "Metrix AI",
+      "subtitle": "AI agents that trade on Monad — every decision auditable",
+      "narration": "",
+      "holdSeconds": 7,
+      "minDuration": 7
+    },
+    {
+      "id": "home",
+      "type": "browser",
+      "narration": "Labeled SIM vault with live equity on Monad",
+      "minDuration": 9,
+      "actions": [
+        { "goto": "/" },
+        { "wait": 3500 },
+        { "scroll": { "y": 200 } },
+        { "wait": 2000 }
+      ]
+    },
+    {
+      "id": "trade_risk",
+      "type": "browser",
+      "narration": "Six RiskGate rules — the model never signs alone",
+      "minDuration": 12,
+      "actions": [
+        { "goto": "/trade" },
+        { "wait": 4000 },
+        { "scroll": { "y": 320 } },
+        { "wait": 3500 }
+      ]
+    },
+    {
+      "id": "kuru_proof",
+      "type": "browser",
+      "narration": "Real Kuru testnet proofs on MonadScan — not screenshots",
+      "minDuration": 10,
+      "actions": [
+        {
+          "goto": "https://testnet.monadscan.com/tx/0xe15c8218a6a64ae054b2cfb475cd7da15b86ebca9c23b007bb55ba3b241abb55"
+        },
+        { "wait": 6000 }
+      ]
+    },
+    {
+      "id": "outro",
+      "type": "title",
+      "title": "Chat → structured risk → you confirm",
+      "subtitle": "gsym236998-metrix-ai.ms.show · github.com/yigenfeng0707-netizen/metrix-ai",
+      "narration": "",
+      "holdSeconds": 7,
+      "minDuration": 7
+    }
+  ]
+}

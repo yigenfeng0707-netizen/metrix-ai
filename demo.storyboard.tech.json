@@ -1,0 +1,113 @@
+{
+  "name": "Metrix AI Technical Demo",
+  "version": "tech-80s-silent",
+  "durationTargetSeconds": 80,
+  "playwrightDir": "tools/demo-video",
+  "baseUrl": "http://127.0.0.1:3000",
+  "healthUrl": "http://127.0.0.1:8787/healthz",
+  "outputDir": "demo-output/tech",
+  "finalMp4": "docs/metrix-ai-tech-demo.mp4",
+  "viewport": { "width": 1920, "height": 1080 },
+  "mode": "record",
+  "burnSubtitles": true,
+  "subtitles": true,
+  "crf": 20,
+  "preset": "veryfast",
+  "audioBitrate": "128k",
+  "silent": true,
+  "note": "Technical walkthrough. Show Perpl public markets + RiskGate panel. Label SIM. Kuru txs not Perpl fills.",
+  "scenes": [
+    {
+      "id": "intro",
+      "type": "title",
+      "title": "Metrix AI — Technical demo",
+      "subtitle": "SIM vault · Kuru on-chain proofs · Perpl analytics panel · RiskGate",
+      "narration": "",
+      "holdSeconds": 7,
+      "minDuration": 7
+    },
+    {
+      "id": "settings",
+      "type": "browser",
+      "narration": "Settings: Mera passkey shell + AUSD/MON balance UI",
+      "minDuration": 10,
+      "actions": [
+        { "goto": "/settings" },
+        { "wait": 4000 },
+        { "scroll": { "y": 180 } },
+        { "wait": 2500 }
+      ]
+    },
+    {
+      "id": "trade_sim",
+      "type": "browser",
+      "narration": "Trade: labeled simulation stream + live agent loop",
+      "minDuration": 14,
+      "actions": [
+        { "goto": "/trade" },
+        { "wait": 4500 },
+        { "scroll": { "y": 220 } },
+        { "wait": 4000 }
+      ]
+    },
+    {
+      "id": "perpl_panel",
+      "type": "browser",
+      "narration": "Perpl public markets + RiskGate verdict stream (not live fills)",
+      "minDuration": 16,
+      "actions": [
+        { "goto": "/trade" },
+        { "wait": 3000 },
+        { "scroll": { "y": 520 } },
+        { "wait": 5000 },
+        { "scroll": { "y": 280 } },
+        { "wait": 3500 }
+      ]
+    },
+    {
+      "id": "kuru_deposit",
+      "type": "browser",
+      "narration": "On-chain Kuru deposit — MonadScan testnet",
+      "minDuration": 12,
+      "actions": [
+        {
+          "goto": "https://testnet.monadscan.com/tx/0xe15c8218a6a64ae054b2cfb475cd7da15b86ebca9c23b007bb55ba3b241abb55"
+        },
+        { "wait": 6500 }
+      ]
+    },
+    {
+      "id": "kuru_ioc",
+      "type": "browser",
+      "narration": "On-chain Kuru IOC margin sell — not Perpl",
+      "minDuration": 10,
+      "actions": [
+        {
+          "goto": "https://testnet.monadscan.com/tx/0x0b1b77cca2023b9676ec62be5ecd7ebcf0763b02d2b86c734a8af405931447a7"
+        },
+        { "wait": 5500 }
+      ]
+    },
+    {
+      "id": "chat",
+      "type": "browser",
+      "narration": "Chat: natural language → tighten-only risk confirm card",
+      "minDuration": 12,
+      "actions": [
+        { "goto": "/chat" },
+        { "wait": 3500 },
+        { "scroll": { "y": 160 } },
+        { "wait": 3500 }
+      ]
+    },
+    {
+      "id": "outro",
+      "type": "title",
+      "title": "Public app + repo ready for judging",
+      "subtitle": "gsym236998-metrix-ai.ms.show · Perpl fills not live-verified",
+      "narration": "",
+      "holdSeconds": 7,
+      "minDuration": 7
+    }
+  ]
+}

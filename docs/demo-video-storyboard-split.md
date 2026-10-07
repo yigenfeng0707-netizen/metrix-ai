@@ -1,7 +1,10 @@
 # Pitch vs Technical demo — 分镜（可本地录）
 
-现有成片：https://youtu.be/FF9rt_Gxd8U（Unlisted，约 60s，SIM + Kuru）。  
-截止前若只更新文案：Pitch / Tech 可暂时共用该链，但标题/描述标明「Tech walkthrough」。
+本地新成片（2026-10-07）：
+- Pitch：`docs/metrix-ai-pitch.mp4`（~50s）· storyboard `demo.storyboard.pitch.json`
+- Tech：`docs/metrix-ai-tech-demo.mp4`（~105s）· storyboard `demo.storyboard.tech.json`
+
+上传文案见 `docs/youtube-upload-copy.md`。旧片 https://youtu.be/FF9rt_Gxd8U 可保留作备份。
 
 ## A. Pitch（建议 ≤45s，另传一条更好）
 

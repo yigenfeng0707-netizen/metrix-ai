@@ -6,34 +6,65 @@ https://studio.youtube.com/channel/UCoiZETBc9_Sl3DpNfEATlBg
 ## Upload page
 https://studio.youtube.com/channel/UCoiZETBc9_Sl3DpNfEATlBg/videos/upload?d=ud
 
-## File
-D:\APPs\Monad 全球旗舰黑客松\metrix-ai\docs\metrix-ai-demo-round1.mp4
+## A. Pitch（≤50s）
 
-## Title
-Metrix AI — Tech walkthrough (Kuru proofs + RiskGate; SIM labeled)
+**File:** `D:\APPs\Monad 全球旗舰黑客松\metrix-ai\docs\metrix-ai-pitch.mp4`
 
-## Description
-Metrix AI tech demo — Monad Metropolis Track 01 (Onchain Finance & Trading).
+**Title**
+```
+Metrix AI — Pitch (Monad agent + RiskGate + Kuru proofs)
+```
 
-This cut is the **technical walkthrough** (SIM agent loop + RiskGate + verified Kuru testnet txs).
-Pitch narrative may reuse the same Unlisted URL until a separate pitch cut is uploaded.
+**Description**
+```
+Metrix AI pitch — Monad Metropolis Track 01.
 
-- Public app: https://gsym236998-metrix-ai.ms.show
-- Spot via Kuru onchain CLOB; two verified Monad testnet txs (margin deposit + IOC margin sell).
-- Server RiskGate R1–R6 before any order is signed; Trade page shows Perpl public markets + risk verdicts.
-- Chat uses ModelScope Qwen for structured commands; confirmation card + RiskGate still gate writes.
-- On-screen fills marked Simulation are not on-chain; Kuru hashes are separate evidence.
-- Not an Agora Perpl live-trade demo (no Perpl fill in this video).
+AI agents that trade on Monad with every decision auditable:
+- Labeled SIM vault equity
+- RiskGate R1–R6 before any order is signed
+- Verified Kuru testnet proofs on MonadScan (not screenshots)
 
+Public app: https://gsym236998-metrix-ai.ms.show
 Repo: https://github.com/yigenfeng0707-netizen/metrix-ai
-Intro: https://yigenfeng0707-netizen.github.io/metrix-ai/
+
+Not an Agora Perpl live-trade claim.
+```
+
+## B. Technical demo（~105s）
+
+**File:** `D:\APPs\Monad 全球旗舰黑客松\metrix-ai\docs\metrix-ai-tech-demo.mp4`
+
+**Title**
+```
+Metrix AI — Tech walkthrough (Kuru + Perpl panel + RiskGate; SIM labeled)
+```
+
+**Description**
+```
+Metrix AI technical walkthrough — Monad Metropolis Track 01.
+
+- Settings: Mera passkey shell + AUSD/MON balance UI
+- Trade: labeled SIM agent loop
+- Perpl public markets + RiskGate verdict panel (fills not live-verified)
+- Two verified Kuru testnet txs (deposit + IOC)
+- Chat → structured tighten-only confirm card
+
+Public app: https://gsym236998-metrix-ai.ms.show
+Repo: https://github.com/yigenfeng0707-netizen/metrix-ai
+
+Not an Agora Perpl live-trade demo.
+```
 
 ## Visibility
-Unlisted
+Unlisted（勿改 Private）
 
-## After publish
-Watch URL: https://youtu.be/FF9rt_Gxd8U
-Video id: FF9rt_Gxd8U
-Published 2026-09-23 (oEmbed OK). Keep Unlisted.
-Paste into hackathon.monad.xyz Demo field and keep the GitHub raw MP4 as backup:
-https://raw.githubusercontent.com/yigenfeng0707-netizen/metrix-ai/main/docs/metrix-ai-demo-round1.mp4
+## After publish — paste into hackathon.monad.xyz
+- Pitch video field → Pitch YouTube URL
+- Tech demo field → Tech YouTube URL
+
+## GitHub raw backup（push 后可用）
+- Pitch: https://raw.githubusercontent.com/yigenfeng0707-netizen/metrix-ai/main/docs/metrix-ai-pitch.mp4
+- Tech: https://raw.githubusercontent.com/yigenfeng0707-netizen/metrix-ai/main/docs/metrix-ai-tech-demo.mp4
+
+## Legacy（旧片，可保留）
+Watch URL: https://youtu.be/FF9rt_Gxd8U · keep Unlisted
