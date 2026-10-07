@@ -22,3 +22,10 @@ demo-output/
 tools/demo-video/node_modules/
 docs/_submit_out/
 
+# 10/2 submit evidence: keep logos + final proof shots only, ignore process artifacts
+docs/submission-assets/*
+!docs/submission-assets/metrix-logo-256.png
+!docs/submission-assets/metrix-logo-512.png
+!docs/submission-assets/_dashboard_final.png
+!docs/submission-assets/_state4.png
+
