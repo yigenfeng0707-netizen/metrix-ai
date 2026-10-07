@@ -136,8 +136,16 @@ export async function persistDecision(d: DecisionEvent): Promise<void> {
   }
 }
 
+export type DbStats = {
+  persisted: boolean;
+  backend: "postgres" | "file";
+  decisions: number;
+  orders: number;
+  path?: string;
+};
+
 /** 落库统计（供 API 展示，证明数据链完整） */
-export async function dbStats(): Promise<{ persisted: boolean; decisions: number; orders: number } | null> {
+export async function dbStats(): Promise<DbStats | null> {
   const db = getPool();
   if (!db) return null;
   try {
@@ -149,6 +157,7 @@ export async function dbStats(): Promise<{ persisted: boolean; decisions: number
     );
     return {
       persisted: true,
+      backend: "postgres",
       decisions: Number(r.rows[0].decisions),
       orders: Number(r.rows[0].orders),
     };

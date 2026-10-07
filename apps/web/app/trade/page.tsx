@@ -7,6 +7,7 @@ import { useAgentStream } from "@/lib/useAgentStream";
 import DecisionCard from "@/components/DecisionCard";
 import ModeBanner from "@/components/ModeBanner";
 import KuruEvidence from "@/components/KuruEvidence";
+import PerplRiskPanel from "@/components/PerplRiskPanel";
 
 export default function TradePage() {
   const [decisions, setDecisions] = useState<DecisionEvent[] | null>(null);
@@ -28,6 +29,8 @@ export default function TradePage() {
       <h1>实时决策流</h1>
       <ModeBanner mode={mode} quoteSource={decisions?.[0]?.book?.quoteSource} />
       <KuruEvidence compact />
+      <h2>Perpl Analytics / Risk</h2>
+      <PerplRiskPanel compact />
       {decisions === null && <p className="muted">加载中…</p>}
       {decisions?.length === 0 && (
         <p className="muted">

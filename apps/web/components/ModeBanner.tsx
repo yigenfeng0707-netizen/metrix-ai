@@ -10,7 +10,7 @@ export default function ModeBanner({
   if (mode === "sim") {
     return (
       <p className="subtitle">
-        当前 <span className="badge sim">SIM</span> 模拟模式：决策流里的成交是本地模拟。主办方接受用模拟演示，不要求为 Perpl 购买 AUSD。
+        当前 <span className="badge sim">SIM</span> 演示模式：决策流成交为本地模拟；下方 Kuru 测试网 hash 为真实链上证据。Perpl 公开行情与 RiskGate 裁决见 Trade 页看板。
       </p>
     );
   }

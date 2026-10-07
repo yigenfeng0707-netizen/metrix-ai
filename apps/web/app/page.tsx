@@ -85,12 +85,18 @@ export default function HomePage() {
       </div>
 
       <div className="card row">
-        <span className="muted">PostgreSQL 落库</span>
+        <span className="muted">决策持久化</span>
         <span className="small">
-          {data.db ? (
-            <>✅ 已持久化 <b className="mono">{data.db.decisions}</b> 条决策 / <b className="mono">{data.db.orders}</b> 笔订单</>
+          {data.db?.persisted ? (
+            <>
+              <span className="badge ok">{data.db.backend === "postgres" ? "PostgreSQL" : "本地 JSON"}</span>{" "}
+              <b className="mono">{data.db.decisions}</b> 条决策 / <b className="mono">{data.db.orders}</b> 笔订单
+            </>
           ) : (
-            "未启用（纯内存模式）"
+            <>
+              <span className="badge info">会话内存</span>{" "}
+              实时流经 WebSocket；重启后从策略循环重建（演示路径不受影响）
+            </>
           )}
         </span>
       </div>

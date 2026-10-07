@@ -10,7 +10,10 @@ import { applyParsedCommand } from "../llm/apply-command";
 import { config } from "../config";
 import { perpSide } from "../strategy/perp-trend";
 import { dbStats } from "../db/pg";
+import { fileStoreEnabled, fileStats } from "../db/file-store";
 import { snapshotRiskLimits } from "../risk/risk-limits";
+import { getPerplReadiness } from "../execution/perpl-readiness";
+import { fetchPerplPublicStatus } from "../market/perpl-public";
 
 type WsConn = { send: (data: string) => void; on: (ev: string, cb: () => void) => void };
 
@@ -38,22 +41,53 @@ export async function buildServer() {
   }));
 
   // ---------- REST ----------
-  app.get("/vaults/demo/overview", async () => ({
-    vault: { id: "demo", name: "Metrix Demo Vault", agent: "Metrix Agent v0.1" },
-    account: store.account,
-    equity: store.equity(),
-    strategy: store.params.grid,
-    mr: store.params.mr,
-    perp: { enabled: config.perpl.enabled, side: perpSide() },
-    stats: { totalDecisions: store.decisions.length },
-    db: await dbStats().catch(() => null),
-    mode: config.mode,
-    riskLimits: snapshotRiskLimits(),
-    llm: {
-      production: llmConfigured(),
-      parser: llmConfigured() ? "modelscope" : "offline-regex",
-      model: llmConfigured() ? config.llmModel : null,
+  app.get("/vaults/demo/overview", async () => {
+    const pg = await dbStats().catch(() => null);
+    const db =
+      pg ??
+      (fileStoreEnabled() ? fileStats(store.decisions.length) : null);
+    return {
+      vault: { id: "demo", name: "Metrix Demo Vault", agent: "Metrix Agent v0.1" },
+      account: store.account,
+      equity: store.equity(),
+      strategy: store.params.grid,
+      mr: store.params.mr,
+      perp: { enabled: config.perpl.enabled, side: perpSide() },
+      stats: { totalDecisions: store.decisions.length },
+      db,
+      mode: config.mode,
+      riskLimits: snapshotRiskLimits(),
+      llm: {
+        production: llmConfigured(),
+        parser: llmConfigured() ? "modelscope" : "offline-regex",
+        model: llmConfigured() ? config.llmModel : null,
+      },
+    };
+  });
+
+  /** Perpl 公开行情 + 真成交就绪检查（不泄露密钥） */
+  app.get("/vaults/demo/perpl/status", async () => getPerplReadiness());
+  app.get("/vaults/demo/perpl/markets", async () => fetchPerplPublicStatus());
+  app.get("/vaults/demo/risk/snapshot", async () => ({
+    limits: snapshotRiskLimits(),
+    account: {
+      equity: store.equity(),
+      dayPnl: store.account.dayPnl,
+      drawdownPct: store.account.drawdownPct,
+      agentStatus: store.account.agentStatus,
+      positionCount: store.account.positions.length,
     },
+    recentVerdicts: store.decisions.slice(0, 12).map((d) => ({
+      id: d.id,
+      ts: d.ts,
+      strategy: d.strategy,
+      passed: d.risk.passed,
+      rule: d.risk.rule,
+      detail: d.risk.detail,
+      venue: d.intent.venue,
+      status: d.status,
+    })),
+    note: "RiskGate R1–R6 evaluates every IntentOrder before signing (Kuru or Perpl).",
   }));
 
   app.get("/vaults/demo/decisions", async (req) => {

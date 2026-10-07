@@ -29,14 +29,23 @@ export const config = {
     wsUrl: process.env.PERPL_WS_URL ?? "wss://app.perpl.xyz",
     chainId: Number(process.env.PERPL_CHAIN_ID ?? 143),
     apiKey: process.env.PERPL_API_KEY ?? "",
-    /** Ed25519 seed（64 hex），仅签名用，不能转出资金 */
-    privateKey: process.env.PERPL_PRIVATE_KEY ?? "",
+    /**
+     * Ed25519 seed（64 hex），仅签名用，不能转出资金。
+     * 官方文档别名 PERPL_API_KEY_SECRET；两者任一即可。
+     */
+    privateKey: (process.env.PERPL_PRIVATE_KEY || process.env.PERPL_API_KEY_SECRET || "").replace(
+      /^0x/,
+      "",
+    ),
     accountId: Number(process.env.PERPL_ACCOUNT_ID ?? 0),
     /** 杠杆（百分之一）：200 = 2x */
     leverage: Number(process.env.PERPL_LEVERAGE ?? 200),
     /** 单笔名义金额（USDC） */
     orderUsd: Number(process.env.PERP_ORDER_USD ?? 100),
-    /** 主网市场 ID：BTC=1, MON=10, ETH=20, SOL=31, HYPE=40, ZEC=50 */
+    /**
+     * 市场 ID：以 GET /v1/pub/context 为准。
+     * 测试网常见：BTC=16 ETH=32 SOL=48 MON=64；主网 ID 不同。
+     */
     marketId: Number(process.env.PERP_MARKET_ID ?? 1),
     priceDecimals: Number(process.env.PERP_PRICE_DECIMALS ?? 1),
     sizeDecimals: Number(process.env.PERP_SIZE_DECIMALS ?? 5),

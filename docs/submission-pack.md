@@ -14,12 +14,12 @@ Metrix AI
 
 ### One-liner / Tagline
 ```
-An autonomous AI trading agent on Monad that spots on Kuru, perps on Perpl — every decision auditable on-chain.
+Autonomous Monad trading agent: Kuru spot proofs on-chain, RiskGate on every intent, live decision feed.
 ```
 
 ### Short description (~300 chars)
 ```
-Metrix AI is an autonomous trading agent on Monad. Spot routes through Kuru's onchain CLOB; a Perpl adapter exists but is not live-verified. Deterministic strategies sit behind six risk rules. Chat commands go to ModelScope Qwen when a token is configured; otherwise the UI says local rules were used. Verified Kuru testnet txs are linked from the homepage.
+Metrix AI is an autonomous trading agent on Monad. Spot routes through Kuru's onchain CLOB with verified testnet txs. Six RiskGate rules and a Perpl analytics/risk panel ship in the public app; Perpl fills are not live-verified so we are not claiming the Agora mobile bounty. Chat uses ModelScope Qwen when configured.
 ```
 
 ### Links
@@ -129,16 +129,17 @@ https://testnet.monadscan.com/tx/0x0b1b77cca2023b9676ec62be5ecd7ebcf0763b02d2b86
 
 ### 4.5 Best Mobile Trading App on Monad — $10,000（Agora · Track 01）
 
+> **2026-10-07：提交页 REMOVE。** 钱包主网 AUSD=0，无 Perpl fill。路径见 `docs/agora-perpl-live-path.md`。冲通真成交后再勾回。
+
 ```
 Metrix AI is a mobile-first Next.js shell (five screens: vault, live decision stream, portfolio, chat commands, strategy settings) with Mera passkey auth, AUSD/MON balance + funding toward the agent vault, and a Web App Manifest for installable display.
 
-Honest status as of 2026-09-21:
-- Mera passkey register/login and AUSD balance read are implemented in apps/web/lib/mera.ts (needs HTTPS + matching rpId; live App hostname is gsym236998-metrix-ai.ms.show).
-- Verified on-chain activity is Kuru testnet (deposit 0xe15c8218… / IOC 0x0b1b77cc…), not Perpl.
-- Perpl live fills and a packaged PWA (manifest / service worker) are still in progress. Do not claim the Kuru IOC hash as a Perpl trade.
+Honest status as of 2026-10-07:
+- Mera passkey + AUSD balance UI are implemented; agent wallet holds 0 AUSD.
+- Verified on-chain activity is Kuru testnet only (deposit 0xe15c8218… / IOC 0x0b1b77cc…), not Perpl.
+- Perpl adapter, enroll/IOC scripts, and Trade-page analytics/risk panel ship in-repo; no live Perpl fill yet.
+- Do NOT select this bounty until a Perpl fill is verified and the demo video shows passkey + AUSD + Perpl trade.
 ```
-
-> 自用备注：Mera D1–D3 代码已进仓（9/29 已修 BIP-44 路径 + 最小 manifest）；评审可点 App 为魔搭 Docker 创空间 https://gsym236998-metrix-ai.ms.show（Running）。Pages 只作介绍页。Agora 全 spec 仍缺 Perpl 真成交；manifest 已有、无 SW。
 
 ### 4.6 Best Community Team Project — $5,000（Monad Foundation · All tracks）
 

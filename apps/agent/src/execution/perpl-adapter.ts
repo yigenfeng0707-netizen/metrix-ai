@@ -5,25 +5,15 @@ import type { IntentOrder } from "@metrix/shared";
 import { config } from "../config";
 
 /**
- * Perpl 永续执行适配器（docs.perpl.xyz/resources/for-developers/api/websocket.md）
+ * Perpl 永续执行适配器（docs.perpl.xyz/.../websocket.md）
  *
  * 协议要点：
  *  - 下单只能走交易 WS（wss://.../ws/v1/trading），REST 不支持下单
  *  - 连接后第一帧必须认证（mt:29 ApiKeySignIn，Ed25519 签名）
- *    canonical = [chain_id, "trading-ws-signin", timestamp_ms, nonce].join("\\n")
- *  - 下单 mt:22（rq 严格递增幂等键）；每单恰回一个 mt:3（sid:100）
- *    code:0 = 已被网关接受转发（≠成交，成交看 mt:24 订单更新流）
- *  - 订单类型 t：1=开多 2=开空 3=平多 4=平空 5=撤单
- *  - fl 标志：0=GTC 1=PostOnly 2=FOK 4=IOC；lv 杠杆百分之一（1000=10x）
- *  - 认证失败 close code 3401；无效请求 1011
- *
- * ⚠️ W2 验证点：
- *  ① lb（最后执行区块）需要订阅 heartbeat 获取区块号（当前用 0 + W1 确认规则）
- *  ② 市场 price_decimals/size_decimals 应从 GET /v1/pub/context 动态获取
- *  ③ mt:24 订单更新流 → 回填 DecisionEvent 的真实成交价
+ *  - 下单 mt:22；每单恰回一个 mt:3（StatusResponse，code:0 = 网关接受）
+ *  - mt:24 订单更新 / 成交回填
  */
 
-// @noble/ed25519 v2 需要注入 sha512
 ed.etc.sha512Sync = (...m) => sha512(ed.etc.concatBytes(...m));
 
 interface WSLike {
@@ -35,12 +25,14 @@ interface WSLike {
   onerror: ((ev?: unknown) => void) | null;
 }
 
-type PendingResolve = (accepted: boolean) => void;
+type PendingResolve = (result: { accepted: boolean; code?: number; detail?: string }) => void;
 
 let ws: WSLike | null = null;
 let rqCounter = 0;
 let snCounter = 0;
 let authed = false;
+let lastFillRef: string | undefined;
+let walletLfr = 0;
 const pending = new Map<number, PendingResolve>();
 
 function backoff(attempt: number): number {
@@ -65,10 +57,10 @@ async function ensureConnection(): Promise<WSLike> {
 
   return new Promise((resolve, reject) => {
     let attempt = 0;
+    let settled = false;
     const connect = () => {
       const sock = new Ctor(`${config.perpl.wsUrl}/ws/v1/trading`);
       sock.onopen = () => {
-        // 第一帧：认证（每次重连使用新的 timestamp + nonce）
         sock.send(
           JSON.stringify({
             mt: 29,
@@ -80,18 +72,34 @@ async function ensureConnection(): Promise<WSLike> {
       };
       sock.onmessage = (ev) => {
         try {
-          const msg = JSON.parse(String(ev.data)) as { mt: number; code?: number };
+          const msg = JSON.parse(String(ev.data)) as {
+            mt: number;
+            code?: number;
+            sn?: number;
+            lfr?: number;
+            detail?: string;
+            fill_id?: string | number;
+            oid?: string | number;
+          };
           if (msg.mt === 19 || msg.mt === 23 || msg.mt === 26) {
-            // WalletSnapshot/OrdersSnapshot/PositionsSnapshot = 认证成功
-            authed = true;
-            resolve(sock);
-          } else if (msg.mt === 3) {
-            // StatusResponse：与 mt:22 的 sn 关联
-            const r = pending.get((msg as { sn?: number }).sn ?? -1);
-            if (r) {
-              pending.delete((msg as { sn?: number }).sn ?? -1);
-              r(msg.code === 0);
+            if (typeof msg.lfr === "number") {
+              walletLfr = msg.lfr;
+              rqCounter = Math.max(rqCounter, walletLfr);
             }
+            authed = true;
+            if (!settled) {
+              settled = true;
+              resolve(sock);
+            }
+          } else if (msg.mt === 3) {
+            const r = pending.get(msg.sn ?? -1);
+            if (r) {
+              pending.delete(msg.sn ?? -1);
+              r({ accepted: msg.code === 0, code: msg.code, detail: msg.detail });
+            }
+          } else if (msg.mt === 24) {
+            const ref = msg.fill_id ?? msg.oid;
+            if (ref !== undefined) lastFillRef = String(ref);
           }
         } catch {
           /* ignore */
@@ -100,9 +108,11 @@ async function ensureConnection(): Promise<WSLike> {
       sock.onclose = (ev) => {
         authed = false;
         ws = null;
-        // 3401 = 认证失败：重连需重新签名；指数退避
+        if (!settled) {
+          settled = true;
+          reject(new Error(`Perpl WS closed before auth (code=${ev?.code ?? "?"})`));
+        }
         setTimeout(connect, backoff(attempt++));
-        reject(new Error(`Perpl WS closed (code=${ev?.code ?? "?"})`));
       };
       sock.onerror = () => sock.close();
       ws = sock;
@@ -129,23 +139,28 @@ function orderType(intent: IntentOrder): number {
   return intent.reason.includes("close") ? 4 : 2;
 }
 
+function riskSlippageBps(): number {
+  return 50;
+}
+
 /**
  * 通过交易 WS 提交永续订单。
- * 返回 true = 网关已接受转发（code 0）；最终成交以 mt:24 为准（W2 接入）。
+ * 等待 mt:3 StatusResponse；code≠0 则抛错。
+ * txRef = perpl-rq{N}（及可选 fill id）。
  */
-export async function executePerpl(intent: IntentOrder): Promise<{ txRef: string }> {
+export async function executePerpl(intent: IntentOrder): Promise<{ txRef: string; accepted: boolean }> {
   if (!config.perpl.enabled) throw new Error("Perpl 模块未启用（PERPL_ENABLED=true）");
   if (!config.perpl.apiKey || !config.perpl.accountId) {
-    throw new Error("Perpl 需要 PERPL_API_KEY / PERPL_ACCOUNT_ID（API Key 注册 + 链上开户，见方案 §7）");
+    throw new Error("Perpl 需要 PERPL_API_KEY / PERPL_ACCOUNT_ID（API Key 注册 + 链上开户）");
   }
   const sock = await ensureConnection();
   const sn = ++snCounter;
-  const rq = ++rqCounter; // W2：rq 需从 account.lfr 播种（WalletSnapshot mt:19）
+  const rq = ++rqCounter;
 
   const isMarket = intent.type === "market";
   const price = Number(intent.price ?? 0);
-  const sizeNotional = Number(intent.size) * price;
-  const sizeCoin = sizeNotional / price;
+  const sizeNotional = Number(intent.size) * (price || 1);
+  const sizeCoin = price > 0 ? sizeNotional / price : Number(intent.size);
 
   const req = {
     mt: 22 as const,
@@ -154,24 +169,38 @@ export async function executePerpl(intent: IntentOrder): Promise<{ txRef: string
     mkt: config.perpl.marketId,
     acc: config.perpl.accountId,
     t: orderType(intent),
-    p: isMarket ? 0 : scalePrice(price), // 市价单 p=0
+    p: isMarket ? 0 : scalePrice(price),
     s: scaleSize(sizeCoin),
-    ms: isMarket ? riskSlippageBps() : undefined, // 市价单滑点上限 bps
-    fl: isMarket ? 4 : 0, // IOC for market, GTC for limit
+    ms: isMarket ? riskSlippageBps() : undefined,
+    fl: isMarket ? 4 : 0,
     lv: config.perpl.leverage,
-    lb: 0, // W2 验证点 ①：普通单应传 currentBlock+100，由 heartbeat 跟踪
+    lb: 0,
   };
-  pending.set(sn, () => undefined);
-  sock.send(JSON.stringify(req));
-  return { txRef: `perpl-rq${rq}` };
+
+  const ack = await new Promise<{ accepted: boolean; code?: number; detail?: string }>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      pending.delete(sn);
+      reject(new Error("Perpl order ack timeout (mt:3)"));
+    }, 12_000);
+    pending.set(sn, (result) => {
+      clearTimeout(timer);
+      resolve(result);
+    });
+    sock.send(JSON.stringify(req));
+  });
+
+  if (!ack.accepted) {
+    throw new Error(`Perpl gateway rejected order (code=${ack.code ?? "?"}): ${ack.detail ?? ""}`);
+  }
+
+  const fillSuffix = lastFillRef ? `-fill${lastFillRef}` : "";
+  return { txRef: `perpl-rq${rq}${fillSuffix}`, accepted: true };
 }
 
-function riskSlippageBps(): number {
-  // R5：市价单滑点上限（与 Kuru 侧同源）
-  return 50;
+export function lastPerplFillRef(): string | undefined {
+  return lastFillRef;
 }
 
-// 保活：每 30s Ping（mt:1）
 setInterval(() => {
   if (ws && authed) {
     try {

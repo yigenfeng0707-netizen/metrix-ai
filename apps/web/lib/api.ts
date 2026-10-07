@@ -33,10 +33,60 @@ export interface Overview {
   mr: MRParams;
   perp: { enabled: boolean; side: string };
   stats: { totalDecisions: number };
-  db: { persisted: boolean; decisions: number; orders: number } | null;
+  db: {
+    persisted: boolean;
+    backend?: "postgres" | "file";
+    decisions: number;
+    orders: number;
+    path?: string;
+  } | null;
   mode?: AgentMode;
   riskLimits?: RiskLimits;
   llm?: { production: boolean; parser: string; model?: string | null };
+}
+
+export interface PerplReadiness {
+  enabled: boolean;
+  hasApiKey: boolean;
+  hasPrivateKey: boolean;
+  hasAccountId: boolean;
+  publicOk: boolean;
+  liveTradeReady: boolean;
+  blockers: string[];
+  nextSteps: string[];
+  public: {
+    ok: boolean;
+    network: string;
+    apiUrl: string;
+    chainId: number;
+    markets: Array<{ id: number; name: string }>;
+    selectedMarket: { id: number; name: string } | null;
+    lastCandle?: { t: number; c: number; v: string };
+    error?: string;
+  };
+  note: string;
+}
+
+export interface RiskSnapshot {
+  limits: RiskLimits;
+  account: {
+    equity: number;
+    dayPnl: number;
+    drawdownPct: number;
+    agentStatus: string;
+    positionCount: number;
+  };
+  recentVerdicts: Array<{
+    id: string;
+    ts: number;
+    strategy: string;
+    passed: boolean;
+    rule?: string;
+    detail: string;
+    venue: string;
+    status: string;
+  }>;
+  note: string;
 }
 
 async function readJson<T>(r: Response): Promise<T> {
@@ -110,4 +160,14 @@ export function fmtUsd(n: number): string {
 
 export function fmtTime(ts: number): string {
   return new Date(ts).toLocaleTimeString("zh-CN", { hour12: false });
+}
+
+export async function getPerplStatus(): Promise<PerplReadiness> {
+  const r = await fetch(`${AGENT_URL}/vaults/demo/perpl/status`, { cache: "no-store" });
+  return readJson<PerplReadiness>(r);
+}
+
+export async function getRiskSnapshot(): Promise<RiskSnapshot> {
+  const r = await fetch(`${AGENT_URL}/vaults/demo/risk/snapshot`, { cache: "no-store" });
+  return readJson<RiskSnapshot>(r);
 }

@@ -2,6 +2,7 @@ import { EventEmitter } from "node:events";
 import type { AccountState, DecisionEvent, StrategyParams, ParsedCommand, CommandApplyResult } from "@metrix/shared";
 import { config } from "./config";
 import { persistDecision } from "./db/pg";
+import { fileStoreEnabled, schedulePersist } from "./db/file-store";
 
 export interface StoredCommand {
   id: string;
@@ -56,6 +57,7 @@ class Store extends EventEmitter {
     if (this.decisions.length > 500) this.decisions.pop();
     this.emit("decision", d);
     void persistDecision(d); // write-through，失败仅告警不阻塞主循环
+    if (fileStoreEnabled()) schedulePersist(this.account, this.decisions);
   }
 
   updateAccount(fn: (a: AccountState) => void): void {
@@ -65,6 +67,13 @@ class Store extends EventEmitter {
     this.account.drawdownPct =
       this.account.highWater > 0 ? (eq - this.account.highWater) / this.account.highWater : 0;
     this.emit("account", this.account);
+    if (fileStoreEnabled()) schedulePersist(this.account, this.decisions);
+  }
+
+  /** 从文件快照恢复（PostgreSQL 未配置时） */
+  hydrateFromFile(account: AccountState, decisions: DecisionEvent[]): void {
+    this.account = account;
+    this.decisions = decisions.slice(0, 500);
   }
 }
 

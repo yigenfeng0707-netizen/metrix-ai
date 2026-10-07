@@ -1,9 +1,10 @@
 # Metrix AI — Monad 自主交易 Agent
 
 > Monad Metropolis 黑客松 · Track 01（链上金融与交易）
-> 现货走 Kuru（测试网已有成交）。Perpl 用模拟演示（主办方允许）；适配器在仓库里，默认关闭。
-> 公网 Demo 默认 **sim**（模拟成交，不是链上 tx）。Chat 在配置魔搭 Token 后调用 Qwen；没有 Token 时用规则解析，并在界面标明。
+> 现货走 Kuru（测试网已有成交）。Perpl 适配器 + 公开行情/风控看板已就绪；**真成交需 aUSD 抵押**，见 `docs/agora-perpl-live-path.md`。
+> 公网 Demo 默认 **sim**（模拟成交，不是链上 tx）。无 PostgreSQL 时用本地 JSON 持久化决策。
 > 前端是五屏 mobile-first Web（已有 **Web App Manifest** / 可「添加到主屏幕」；**未装** Service Worker 离线缓存）。
+> **Agora $10k**：当前不勾选（无 Perpl fill）；冲奖前先完成真成交路径。
 
 [![CI](https://github.com/yigenfeng0707-netizen/metrix-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/yigenfeng0707-netizen/metrix-ai/actions/workflows/ci.yml)
 [![App](https://img.shields.io/badge/app-ms.show-green)](https://gsym236998-metrix-ai.ms.show)

@@ -276,13 +276,18 @@ export default function SettingsPage() {
           <div className="small muted">
             {perp?.enabled
               ? `已启用 · 当前仓位：${perp.side === "flat" ? "空仓" : perp.side === "long" ? "多" : "空"}`
-              : "未启用（PERPL_ENABLED=false）。适配器已写，尚无 Perpl 成交哈希。"}
+              : "未启用（PERPL_ENABLED=false）。适配器与就绪检查已就绪；尚无 Perpl 成交哈希。"}
           </div>
         </div>
-        <span className={`badge ${perp?.enabled ? "ok" : "rej"}`}>{perp?.enabled ? "ON" : "OFF"}</span>
+        <span className={`badge ${perp?.enabled ? "ok" : "sim"}`}>{perp?.enabled ? "ON" : "OFF"}</span>
       </div>
       <p className="muted small">
-        启用需在本机 .env 配置 Perpl 测试网密钥。Settings 里的 Kuru 测试网 hash 不是 Perpl 成交。
+        真成交路径：给 Agent 钱包充 ≥100 aUSD → testnet.perpl.xyz 建 profile →{" "}
+        <code>node scripts/perpl-enroll-testnet.mjs</code> → 链上 createAccount →{" "}
+        <code>scripts/perpl-place-ioc.mjs</code>。详见 docs/agora-perpl-live-path.md。Kuru 测试网 hash 不是 Perpl 成交。
+      </p>
+      <p className="muted small">
+        Trade 页「Perpl Analytics / Risk」看板展示公开行情与 RiskGate 裁决，供 Analytics bounty 举证。
       </p>
 
       <h2>风控硬规则（只读；Chat 只能调严）</h2>

@@ -1,39 +1,45 @@
-import { randomBytes, createPrivateKey, sign as nodeSign, type KeyObject } from "node:crypto";
+import { randomBytes, createHash } from "node:crypto";
+import * as ed from "@noble/ed25519";
+import { sha512 } from "@noble/hashes/sha512";
 import { config } from "../config";
 
 /**
- * Perpl REST 客户端（docs.perpl.xyz/resources/for-developers/api/rest.md）
+ * Perpl REST 客户端（docs.perpl.xyz/.../authentication.md）
  *
  * REST 仅覆盖：行情（K线/Context）、历史查询、API Key 管理。
  * 下单必须走 WebSocket（见 perpl-adapter.ts）。
  *
  * 认证：Ed25519 API Key，每请求 4 个头：
  *   X-API-Key / X-API-Timestamp / X-API-Nonce / X-API-Signature
- * ⚠️ W1 验证点：canonical string 的精确拼接规则以 authentication.md 为准
- *   （当前实现按常见 "<method>\n<path>\n<timestamp>\n<nonce>" 草案，需对照修正）
+ * canonical（6 段，\n 拼接）:
+ *   chain_id \n METHOD \n request-target \n timestamp_ms \n nonce \n sha256(body) hex
  */
 
-const BASE = config.perpl.apiUrl; // https://app.perpl.xyz/api
+ed.etc.sha512Sync = (...m) => sha512(ed.etc.concatBytes(...m));
 
-function loadEd25519Key(): KeyObject | null {
-  if (!config.perpl.privateKey) return null;
-  // 约定：PERPL_PRIVATE_KEY 为 64 hex（32 字节 Ed25519 seed）
-  const seed = Buffer.from(config.perpl.privateKey, "hex");
-  return createPrivateKey({ key: Buffer.concat([seed, seed]), format: "der", type: "pkcs8" });
+const BASE = config.perpl.apiUrl;
+
+function seedBytes(): Buffer {
+  if (!config.perpl.privateKey) throw new Error("Perpl 认证需要 PERPL_PRIVATE_KEY / PERPL_API_KEY_SECRET");
+  return Buffer.from(config.perpl.privateKey.replace(/^0x/, ""), "hex");
 }
 
-function base64url(b: Buffer): string {
-  return b.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+function base64url(b: Buffer | Uint8Array): string {
+  return Buffer.from(b)
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 }
 
-/** 组装认证头（W1：对照 authentication.md 校准 canonical string） */
-export function authHeaders(method: string, path: string): Record<string, string> {
-  const key = loadEd25519Key();
-  if (!key || !config.perpl.apiKey) throw new Error("Perpl 认证需要 PERPL_API_KEY / PERPL_PRIVATE_KEY");
+/** 组装认证头（与官方 authentication.md 对齐） */
+export function authHeaders(method: string, path: string, body = ""): Record<string, string> {
+  if (!config.perpl.apiKey) throw new Error("Perpl 认证需要 PERPL_API_KEY");
   const ts = Date.now().toString();
   const nonce = base64url(randomBytes(16));
-  const canonical = `${method.toUpperCase()}\n${path}\n${ts}\n${nonce}`;
-  const sig = nodeSign(null, Buffer.from(canonical), key);
+  const bodyHash = createHash("sha256").update(body).digest("hex");
+  const canonical = [config.perpl.chainId, method.toUpperCase(), path, ts, nonce, bodyHash].join("\n");
+  const sig = ed.sign(Buffer.from(canonical), seedBytes());
   return {
     "X-API-Key": config.perpl.apiKey,
     "X-API-Timestamp": ts,
@@ -47,6 +53,7 @@ export function authHeaders(method: string, path: string): Record<string, string
 export interface PerplContext {
   chain: unknown;
   markets: Array<{ id: number; name?: string; price_decimals?: number; size_decimals?: number }>;
+  min_account_open_amount?: number;
 }
 
 /** 全局配置：链、协议实例、代币、市场（GET /v1/pub/context） */
@@ -57,11 +64,22 @@ export async function getContext(): Promise<PerplContext> {
 }
 
 export interface Candle {
-  t: number; o: number; h: number; l: number; c: number; v: string; n: number;
+  t: number;
+  o: number;
+  h: number;
+  l: number;
+  c: number;
+  v: string;
+  n: number;
 }
 
 /** K线（GET /v1/market-data/:market_id/candles/:resolution/:from-:to，最多 1024 根） */
-export async function getCandles(marketId: number, resolutionSec: number, fromMs: number, toMs: number): Promise<Candle[]> {
+export async function getCandles(
+  marketId: number,
+  resolutionSec: number,
+  fromMs: number,
+  toMs: number,
+): Promise<Candle[]> {
   const url = `${BASE}/v1/market-data/${marketId}/candles/${resolutionSec}/${fromMs}-${toMs}`;
   const r = await fetch(url);
   if (!r.ok) throw new Error(`Perpl candles ${r.status}`);
@@ -69,7 +87,7 @@ export async function getCandles(marketId: number, resolutionSec: number, fromMs
   return data.d ?? [];
 }
 
-// ---------- 认证端点（历史查询，W1 验证签名后启用） ----------
+// ---------- 认证端点 ----------
 
 /** 成交记录（GET /v1/trading/fills，游标分页） */
 export async function getFills(count = 50, page?: string): Promise<unknown> {
